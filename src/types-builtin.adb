@@ -1,3 +1,4 @@
+with Ada.Unchecked_Conversion;
 package body Types.BuiltIn is
    
    ------------
@@ -64,7 +65,7 @@ package body Types.BuiltIn is
 
    procedure Binary_Write(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : in NodeId) is
    begin
-	  NodeId_Identifier'Write(Stream, (Item.NodeId_Type, False, False));
+	  Binary_Write(Stream, NodeId_Identifier'(Item.NodeId_Type, False, False));
 	  case Item.NodeId_Type is
 		 when TWOBYTE_NODEID =>
 			Byte'Write(Stream, Item.Byte_Identifier);
@@ -168,7 +169,7 @@ package body Types.BuiltIn is
 
    procedure Binary_Write(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : in ExpandedNodeId) is
    begin
-      NodeId_Identifier'Write(Stream, (Item.NodeId_Type, not Item.ServerIndex.Is_Null, not Item.NamespaceUri.Is_Null));
+      Binary_Write(Stream, NodeId_Identifier'(Item.NodeId_Type, not Item.ServerIndex.Is_Null, not Item.NamespaceUri.Is_Null));
       case Item.NodeId_Type is
    		 when TWOBYTE_NODEID =>
    			Byte'Write(Stream, Item.Byte_Identifier);
@@ -300,7 +301,7 @@ package body Types.BuiltIn is
                                                       not Item.Locale.Is_Null, not Item.AdditionalInfo.Is_Null, not Item.InnerStatusCode.Is_Null,
                                                       not Item.InnerDiagnosticInfo.Is_Null);
    begin
-      DiagnosticInfo_Encoding'Write(Stream, Encoding);
+      Binary_Write(Stream, Encoding);
       if not Item.SymbolicId.Is_Null then
          Int32'Write(Stream, Item.SymbolicId.Get);
       end if;
@@ -573,166 +574,159 @@ package body Types.BuiltIn is
    ---------------
    --  Variant  --
    ---------------
-   type Variant_Encoding is record
-      Value_Type       : VariantType;
-      HasArrayDimensions : Standard.Boolean;
-      IsArray            : Standard.Boolean;
-   end record;
-   for Variant_Encoding use record
-      Value_Type          at 0 range 0 .. 5;
-      HasArrayDimensions  at 0 range 6 .. 6;
-      IsArray             at 0 range 7 .. 7;
-   end record;
-   for Variant_Encoding'Size use 8;
-  
-   procedure Binary_Write(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : in Variant_Encoding) is
-   	  Overlay : Byte;
-   	  for Overlay'Address use Item'Address;
-   begin
-   	  Byte'Write(Stream, Overlay);
-   end Binary_Write;
-
-   procedure Binary_Read(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out Variant_Encoding) is
-   	  Overlay : Byte;
-   	  for Overlay'Address use Item'Address;
-   begin
-   	  Byte'Read(Stream, Overlay);
-   end Binary_Read;
+   
+   -- Old Encoding
+   --  type Variant_Encoding is record
+   --     Value_Type       : VariantType;
+   --     HasArrayDimensions : Standard.Boolean;
+   --     IsArray            : Standard.Boolean;
+   --  end record;
+   --  for Variant_Encoding use record
+   --     Value_Type          at 0 range 0 .. 5;
+   --     HasArrayDimensions  at 0 range 6 .. 6;
+   --     IsArray             at 0 range 7 .. 7;
+   --  end record;
+   --  for Variant_Encoding'Size use 8;
+   
+   function VariantType2Byte is new Ada.Unchecked_Conversion(VariantType, Byte);
+   function Byte2VariantType is new Ada.Unchecked_Conversion(Byte, VariantType);
 
    procedure Binary_Write(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : in Variant) is
-      Encoding : constant Variant_Encoding := (Item.Value_Type, Item.Is_Array and then (not Item.ArrayDimensions.Is_Null), Item.Is_Array);
+	  Encoding_Byte : Byte := VariantType2Byte(Item.Variant_Type);
    begin
-      Variant_Encoding'Write(Stream, Encoding);
-      case Item.Is_Array is
-      when False =>
-         case Item.Value_Type is
-			when BOOLEAN_TYPE => Boolean'Write(Stream, Item.Boolean_Value);
-			when SBYTE_TYPE => SByte'Write(Stream, Item.SByte_Value);
-			when BYTE_TYPE => Byte'Write(Stream, Item.Byte_Value);
-			when INT16_TYPE => Int16'Write(Stream, Item.Int16_Value);
-			when UINT16_TYPE => UInt16'Write(Stream, Item.UInt16_Value);
-			when INT32_TYPE => Int32'Write(Stream, Item.Int32_Value);
-			when UINT32_TYPE => UInt32'Write(Stream, Item.UInt32_Value);
-			when INT64_TYPE => Int64'Write(Stream, Item.Int64_Value);
-			when UINT64_TYPE => UInt64'Write(Stream, Item.UInt64_Value);
-			when FLOAT_TYPE => Float'Write(Stream, Item.Float_Value);
-			when DOUBLE_TYPE => Double'Write(Stream,Item.Double_Value);
-			when STRING_TYPE => Binary_Write(Stream,Item.String_Value);
-			when DATETIME_TYPE => DateTime'Write(Stream,Item.DateTime_Value);
-			when GUID_TYPE => Binary_Write(Stream,Item.Guid_Value);
-			when BYTESTRING_TYPE => Binary_Write(Stream,Item.ByteString_Value);
-			when XMLELEMENT_TYPE => Binary_Write(Stream,Item.XmlElement_Value);
-			when NODEID_TYPE => Binary_Write(Stream, Item.NodeId_Value.Get);
-			when EXPANDEDNODEID_TYPE => Binary_Write(Stream,Item.ExpandedNodeId_Value.Get);
-			when STATUSCODE_TYPE => StatusCode'Write(Stream,Item.StatusCode_Value);
-			when QUALIFIEDNAME_TYPE => Binary_Write(Stream,Item.QualifiedName_Value.Get);
-			when LOCALIZEDTEXT_TYPE => Binary_Write(Stream,Item.LocalizedText_Value.Get);
-			when EXTENSIONOBJECT_TYPE => Binary_Write(Stream,Item.ExtensionObject_Value.Get);
-			when DATAVALUE_TYPE => Binary_Write(Stream,Item.DataValue_Value.Get);
-			when VARIANT_TYPE => Binary_Write(Stream, Variant(Item.Variant_Value.Get.Data.all));
-			when DIAGNOSTICINFO_TYPE => Binary_Write(Stream, DiagnosticInfo(Item.DiagnosticInfo_Value.Get.Data.all));
-         end case;
-      when True =>
-         case Item.Value_Type is
-			when BOOLEAN_TYPE => ListOfBoolean.Pointer'Write(Stream, Item.Boolean_Values);
-			when SBYTE_TYPE => ListOfSByte.Pointer'Write(Stream, Item.SByte_Values);
-			when BYTE_TYPE => ListOfByte.Pointer'Write(Stream, Item.Byte_Values);
-			when INT16_TYPE => ListOfInt16.Pointer'Write(Stream, Item.Int16_Values);
-			when UINT16_TYPE => ListOfUInt16.Pointer'Write(Stream, Item.UInt16_Values);
-			when INT32_TYPE => ListOfInt32.Pointer'Write(Stream, Item.Int32_Values);
-			when UINT32_TYPE => ListOfUInt32.Pointer'Write(Stream, Item.UInt32_Values);
-			when INT64_TYPE => ListOfInt64.Pointer'Write(Stream, Item.Int64_Values);
-			when UINT64_TYPE => ListOfUInt64.Pointer'Write(Stream, Item.UInt64_Values);
-			when FLOAT_TYPE => ListOfFloat.Pointer'Write(Stream, Item.Float_Values);
-			when DOUBLE_TYPE => ListOfDouble.Pointer'Write(Stream, Item.Double_Values);
-			when STRING_TYPE => ListOfString.Pointer'Write(Stream, Item.String_Values);
-			when DATETIME_TYPE => ListOfDateTime.Pointer'Write(Stream, Item.DateTime_Values);
-			when GUID_TYPE => ListOfGuid.Pointer'Write(Stream, Item.Guid_Values);
-			when BYTESTRING_TYPE => ListOfByteString.Pointer'Write(Stream, Item.ByteString_Values);
-			when XMLELEMENT_TYPE => ListOfXmlElement.Pointer'Write(Stream, Item.XmlElement_Values);
-			when NODEID_TYPE => ListOfNodeId.Pointer'Write(Stream, Item.NodeId_Values);
-			when EXPANDEDNODEID_TYPE => ListOfExpandedNodeId.Pointer'Write(Stream, Item.ExpandedNodeId_Values);
-			when STATUSCODE_TYPE => ListOfStatusCode.Pointer'Write(Stream, Item.StatusCode_Values);
-			when QUALIFIEDNAME_TYPE => ListOfQualifiedName.Pointer'Write(Stream, Item.QualifiedName_Values);
-			when LOCALIZEDTEXT_TYPE => ListOfLocalizedText.Pointer'Write(Stream, Item.LocalizedText_Values);
-			when EXTENSIONOBJECT_TYPE => ListOfExtensionObject.Pointer'Write(Stream, Item.ExtensionObject_Values);
-			when DATAVALUE_TYPE => ListOfDataValue.Pointer'Write(Stream, Item.DataValue_Values);
-			when VARIANT_TYPE => ListOfVariant.Pointer'Write(Stream, Item.Variant_Values);
-			when DIAGNOSTICINFO_TYPE => ListOfDiagnosticInfo.Pointer'Write(Stream, Item.DiagnosticInfo_Values);
-         end case;
-         if not Item.ArrayDimensions.Is_Null then
-            ListOfInt32.Nullable_Pointer'Write(Stream, Item.ArrayDimensions);
-         end if;
+	  if VariantType'Pos(Item.Variant_Type) > 128 and then not Item.ArrayDimensions.Is_Null then
+		 Encoding_Byte := Encoding_Byte + 64;
+	  end if;
+	  Byte'Write(Stream, Encoding_Byte);
+	  case Item.Variant_Type is
+		 when BOOLEAN_VARIANT => Boolean'Write(Stream, Item.Boolean_Value);
+		 when SBYTE_VARIANT => SByte'Write(Stream, Item.SByte_Value);
+		 when BYTE_VARIANT => Byte'Write(Stream, Item.Byte_Value);
+		 when INT16_VARIANT => Int16'Write(Stream, Item.Int16_Value);
+		 when UINT16_VARIANT => UInt16'Write(Stream, Item.UInt16_Value);
+		 when INT32_VARIANT => Int32'Write(Stream, Item.Int32_Value);
+		 when UINT32_VARIANT => UInt32'Write(Stream, Item.UInt32_Value);
+		 when INT64_VARIANT => Int64'Write(Stream, Item.Int64_Value);
+		 when UINT64_VARIANT => UInt64'Write(Stream, Item.UInt64_Value);
+		 when FLOAT_VARIANT => Float'Write(Stream, Item.Float_Value);
+		 when DOUBLE_VARIANT => Double'Write(Stream,Item.Double_Value);
+		 when STRING_VARIANT => Binary_Write(Stream,Item.String_Value);
+		 when DATETIME_VARIANT => DateTime'Write(Stream,Item.DateTime_Value);
+		 when GUID_VARIANT => Binary_Write(Stream,Item.Guid_Value);
+		 when BYTESTRING_VARIANT => Binary_Write(Stream,Item.ByteString_Value);
+		 when XMLELEMENT_VARIANT => Binary_Write(Stream,Item.XmlElement_Value);
+		 when NODEID_VARIANT => Binary_Write(Stream, Item.NodeId_Value.Get);
+		 when EXPANDEDNODEID_VARIANT => Binary_Write(Stream,Item.ExpandedNodeId_Value.Get);
+		 when STATUSCODE_VARIANT => StatusCode'Write(Stream,Item.StatusCode_Value);
+		 when QUALIFIEDNAME_VARIANT => Binary_Write(Stream,Item.QualifiedName_Value.Get);
+		 when LOCALIZEDTEXT_VARIANT => Binary_Write(Stream,Item.LocalizedText_Value.Get);
+		 when EXTENSIONOBJECT_VARIANT => Binary_Write(Stream,Item.ExtensionObject_Value.Get);
+		 when DATAVALUE_VARIANT => Binary_Write(Stream,Item.DataValue_Value.Get);
+		 when VARIANT_VARIANT => Binary_Write(Stream, Variant(Item.Variant_Value.Get.Data.all));
+		 when DIAGNOSTICINFO_VARIANT => Binary_Write(Stream, DiagnosticInfo(Item.DiagnosticInfo_Value.Get.Data.all));
+		 when others =>
+			case Item.Variant_Type is
+			   when BOOLEAN_ARRAY_VARIANT => ListOfBoolean.Pointer'Write(Stream, Item.Boolean_Values);
+			   when SBYTE_ARRAY_VARIANT => ListOfSByte.Pointer'Write(Stream, Item.SByte_Values);
+			   when BYTE_ARRAY_VARIANT => ListOfByte.Pointer'Write(Stream, Item.Byte_Values);
+			   when INT16_ARRAY_VARIANT => ListOfInt16.Pointer'Write(Stream, Item.Int16_Values);
+			   when UINT16_ARRAY_VARIANT => ListOfUInt16.Pointer'Write(Stream, Item.UInt16_Values);
+			   when INT32_ARRAY_VARIANT => ListOfInt32.Pointer'Write(Stream, Item.Int32_Values);
+			   when UINT32_ARRAY_VARIANT => ListOfUInt32.Pointer'Write(Stream, Item.UInt32_Values);
+			   when INT64_ARRAY_VARIANT => ListOfInt64.Pointer'Write(Stream, Item.Int64_Values);
+			   when UINT64_ARRAY_VARIANT => ListOfUInt64.Pointer'Write(Stream, Item.UInt64_Values);
+			   when FLOAT_ARRAY_VARIANT => ListOfFloat.Pointer'Write(Stream, Item.Float_Values);
+			   when DOUBLE_ARRAY_VARIANT => ListOfDouble.Pointer'Write(Stream, Item.Double_Values);
+			   when STRING_ARRAY_VARIANT => ListOfString.Pointer'Write(Stream, Item.String_Values);
+			   when DATETIME_ARRAY_VARIANT => ListOfDateTime.Pointer'Write(Stream, Item.DateTime_Values);
+			   when GUID_ARRAY_VARIANT => ListOfGuid.Pointer'Write(Stream, Item.Guid_Values);
+			   when BYTESTRING_ARRAY_VARIANT => ListOfByteString.Pointer'Write(Stream, Item.ByteString_Values);
+			   when XMLELEMENT_ARRAY_VARIANT => ListOfXmlElement.Pointer'Write(Stream, Item.XmlElement_Values);
+			   when NODEID_ARRAY_VARIANT => ListOfNodeId.Pointer'Write(Stream, Item.NodeId_Values);
+			   when EXPANDEDNODEID_ARRAY_VARIANT => ListOfExpandedNodeId.Pointer'Write(Stream, Item.ExpandedNodeId_Values);
+			   when STATUSCODE_ARRAY_VARIANT => ListOfStatusCode.Pointer'Write(Stream, Item.StatusCode_Values);
+			   when QUALIFIEDNAME_ARRAY_VARIANT => ListOfQualifiedName.Pointer'Write(Stream, Item.QualifiedName_Values);
+			   when LOCALIZEDTEXT_ARRAY_VARIANT => ListOfLocalizedText.Pointer'Write(Stream, Item.LocalizedText_Values);
+			   when EXTENSIONOBJECT_ARRAY_VARIANT => ListOfExtensionObject.Pointer'Write(Stream, Item.ExtensionObject_Values);
+			   when DATAVALUE_ARRAY_VARIANT => ListOfDataValue.Pointer'Write(Stream, Item.DataValue_Values);
+			   when VARIANT_ARRAY_VARIANT => ListOfVariant.Pointer'Write(Stream, Item.Variant_Values);
+			   when DIAGNOSTICINFO_ARRAY_VARIANT => ListOfDiagnosticInfo.Pointer'Write(Stream, Item.DiagnosticInfo_Values);
+			   when others => null;
+			end case;
+			if not Item.ArrayDimensions.Is_Null then
+			   ListOfInt32.Nullable_Pointer'Write(Stream, Item.ArrayDimensions);
+			end if;
       end case;
    end Binary_Write;
 
    procedure Binary_Read(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out Variant) is
-      Encoding : constant Variant_Encoding := Variant_Encoding'Input(Stream);
+      Encoding_Byte : Byte := Byte'Input(Stream);
+	  With_ArrayDimensions : constant Standard.Boolean := (Encoding_Byte and 64) > 0;
    begin
-   	  case Encoding.IsArray is
-   		 when False =>
-   			case Encoding.Value_Type is
-   			   when BOOLEAN_TYPE => Item := Variant'(BOOLEAN_TYPE, False, Boolean'Input(Stream));
-   			   when SBYTE_TYPE => Item := Variant'(SBYTE_TYPE, False, SByte'Input(Stream));
-   			   when BYTE_TYPE => Item := Variant'(BYTE_TYPE, False, Byte'Input(Stream));
-   			   when INT16_TYPE => Item := Variant'(INT16_TYPE, False, Int16'Input(Stream));
-   			   when UINT16_TYPE => Item := Variant'(UINT16_TYPE, False, UInt16'Input(Stream));
-   			   when INT32_TYPE => Item := Variant'(INT32_TYPE, False, Int32'Input(Stream));
-   			   when UINT32_TYPE => Item := Variant'(UINT32_TYPE, False, UInt32'Input(Stream));
-   			   when INT64_TYPE => Item := Variant'(INT64_TYPE, False, Int64'Input(Stream));
-   			   when UINT64_TYPE => Item := Variant'(UINT64_TYPE, False, UInt64'Input(Stream));
-   			   when FLOAT_TYPE => Item := Variant'(FLOAT_TYPE, False, Float'Input(Stream));
-   			   when DOUBLE_TYPE => Item := Variant'(DOUBLE_TYPE, False, Double'Input(Stream));
-   			   when STRING_TYPE => Item := Variant'(STRING_TYPE, False, String'Input(Stream));
-   			   when DATETIME_TYPE => Item := Variant'(DATETIME_TYPE, False, DateTime'Input(Stream));
-   			   when GUID_TYPE => Item := Variant'(GUID_TYPE, False, Guid'Input(Stream));
-   			   when BYTESTRING_TYPE => Item := Variant'(BYTESTRING_TYPE, False, ByteString'Input(Stream));
-   			   when XMLELEMENT_TYPE => Item := Variant'(XMLELEMENT_TYPE, False, XmlElement'Input(Stream));
-   			   when NODEID_TYPE => Item := Variant'(NODEID_TYPE, False, NodeIds.Create(new NodeId'(NodeId'Input(Stream))));
-   			   when EXPANDEDNODEID_TYPE => Item := Variant'(EXPANDEDNODEID_TYPE, False, ExpandedNodeIds.Create(new ExpandedNodeId'(ExpandedNodeId'Input(Stream))));
-   			   when STATUSCODE_TYPE => Item := Variant'(STATUSCODE_TYPE, False, StatusCode'Input(Stream));
-   			   when QUALIFIEDNAME_TYPE => Item := Variant'(QUALIFIEDNAME_TYPE, False, QualifiedNames.Create(new QualifiedName'(QualifiedName'Input(Stream))));
-   			   when LOCALIZEDTEXT_TYPE => Item := Variant'(LOCALIZEDTEXT_TYPE, False, LocalizedTexts.Create(new LocalizedText'(LocalizedText'Input(Stream))));
-   			   when EXTENSIONOBJECT_TYPE => Item := Variant'(EXTENSIONOBJECT_TYPE, False, ExtensionObjects.Create(new ExtensionObject'(ExtensionObject'Input(Stream))));
-   			   when DATAVALUE_TYPE => Item := Variant'(DATAVALUE_TYPE, False, DataValues.Create(new DataValue'(DataValue'Input(Stream))));
-   			   when VARIANT_TYPE => Item := Variant'(VARIANT_TYPE, False, Variants.Create(new Variant'(Variant'Input(Stream))));
-   			   when DIAGNOSTICINFO_TYPE => Item := Variant'(DIAGNOSTICINFO_TYPE, False, DiagnosticInfos.Create(new DiagnosticInfo'(DiagnosticInfo'Input(Stream))));
-   			end case;
-   		 when True =>
+	  if With_ArrayDimensions then
+		 Encoding_Byte := Encoding_Byte - 64;
+	  end if;
+	  case Byte2VariantType(Encoding_Byte) is
+		 when BOOLEAN_VARIANT => Item := Variant'(BOOLEAN_VARIANT, Boolean'Input(Stream));
+		 when SBYTE_VARIANT => Item := Variant'(SBYTE_VARIANT, SByte'Input(Stream));
+		 when BYTE_VARIANT => Item := Variant'(BYTE_VARIANT, Byte'Input(Stream));
+		 when INT16_VARIANT => Item := Variant'(INT16_VARIANT, Int16'Input(Stream));
+		 when UINT16_VARIANT => Item := Variant'(UINT16_VARIANT, UInt16'Input(Stream));
+		 when INT32_VARIANT => Item := Variant'(INT32_VARIANT, Int32'Input(Stream));
+		 when UINT32_VARIANT => Item := Variant'(UINT32_VARIANT, UInt32'Input(Stream));
+		 when INT64_VARIANT => Item := Variant'(INT64_VARIANT, Int64'Input(Stream));
+		 when UINT64_VARIANT => Item := Variant'(UINT64_VARIANT, UInt64'Input(Stream));
+		 when FLOAT_VARIANT => Item := Variant'(FLOAT_VARIANT, Float'Input(Stream));
+		 when DOUBLE_VARIANT => Item := Variant'(DOUBLE_VARIANT, Double'Input(Stream));
+		 when STRING_VARIANT => Item := Variant'(STRING_VARIANT, String'Input(Stream));
+		 when DATETIME_VARIANT => Item := Variant'(DATETIME_VARIANT, DateTime'Input(Stream));
+		 when GUID_VARIANT => Item := Variant'(GUID_VARIANT, Guid'Input(Stream));
+		 when BYTESTRING_VARIANT => Item := Variant'(BYTESTRING_VARIANT, ByteString'Input(Stream));
+		 when XMLELEMENT_VARIANT => Item := Variant'(XMLELEMENT_VARIANT, XmlElement'Input(Stream));
+		 when NODEID_VARIANT => Item := Variant'(NODEID_VARIANT, NodeIds.Create(new NodeId'(NodeId'Input(Stream))));
+		 when EXPANDEDNODEID_VARIANT => Item := Variant'(EXPANDEDNODEID_VARIANT, ExpandedNodeIds.Create(new ExpandedNodeId'(ExpandedNodeId'Input(Stream))));
+		 when STATUSCODE_VARIANT => Item := Variant'(STATUSCODE_VARIANT, StatusCode'Input(Stream));
+		 when QUALIFIEDNAME_VARIANT => Item := Variant'(QUALIFIEDNAME_VARIANT, QualifiedNames.Create(new QualifiedName'(QualifiedName'Input(Stream))));
+		 when LOCALIZEDTEXT_VARIANT => Item := Variant'(LOCALIZEDTEXT_VARIANT, LocalizedTexts.Create(new LocalizedText'(LocalizedText'Input(Stream))));
+		 when EXTENSIONOBJECT_VARIANT => Item := Variant'(EXTENSIONOBJECT_VARIANT, ExtensionObjects.Create(new ExtensionObject'(ExtensionObject'Input(Stream))));
+		 when DATAVALUE_VARIANT => Item := Variant'(DATAVALUE_VARIANT, DataValues.Create(new DataValue'(DataValue'Input(Stream))));
+		 when VARIANT_VARIANT => Item := Variant'(VARIANT_VARIANT, Variants.Create(new Variant'(Variant'Input(Stream))));
+		 when DIAGNOSTICINFO_VARIANT => Item := Variant'(DIAGNOSTICINFO_VARIANT, DiagnosticInfos.Create(new DiagnosticInfo'(DiagnosticInfo'Input(Stream))));
+		 when others =>
 			declare
 			   Empty_Dimensions : constant ListOfInt32.Nullable_Pointer := ListOfInt32.Create(null);
 			begin
-   			case Encoding.Value_Type is
-   			   when BOOLEAN_TYPE => Item := Variant'(BOOLEAN_TYPE, True, Empty_Dimensions, ListOfBoolean.Pointer'Input(Stream));
-   			   when SBYTE_TYPE => Item := Variant'(SBYTE_TYPE, True, Empty_Dimensions, ListOfSByte.Pointer'Input(Stream));
-   			   when BYTE_TYPE => Item := Variant'(BYTE_TYPE, True, Empty_Dimensions, ListOfByte.Pointer'Input(Stream));
-   			   when INT16_TYPE => Item := Variant'(INT16_TYPE, True, Empty_Dimensions, ListOfInt16.Pointer'Input(Stream));
-   			   when UINT16_TYPE => Item := Variant'(UINT16_TYPE, True, Empty_Dimensions, ListOfUInt16.Pointer'Input(Stream));
-   			   when INT32_TYPE => Item := Variant'(INT32_TYPE, True, Empty_Dimensions, ListOfInt32.Pointer'Input(Stream));
-   			   when UINT32_TYPE => Item := Variant'(UINT32_TYPE, True, Empty_Dimensions, ListOfUInt32.Pointer'Input(Stream));
-   			   when INT64_TYPE => Item := Variant'(INT64_TYPE, True, Empty_Dimensions, ListOfInt64.Pointer'Input(Stream));
-   			   when UINT64_TYPE => Item := Variant'(UINT64_TYPE, True, Empty_Dimensions, ListOfUInt64.Pointer'Input(Stream));
-   			   when FLOAT_TYPE => Item := Variant'(FLOAT_TYPE, True, Empty_Dimensions, ListOfFloat.Pointer'Input(Stream));
-   			   when DOUBLE_TYPE => Item := Variant'(DOUBLE_TYPE, True, Empty_Dimensions, ListOfDouble.Pointer'Input(Stream));
-   			   when STRING_TYPE => Item := Variant'(STRING_TYPE, True, Empty_Dimensions, ListOfString.Pointer'Input(Stream));
-   			   when DATETIME_TYPE => Item := Variant'(DATETIME_TYPE, True, Empty_Dimensions, ListOfDateTime.Pointer'Input(Stream));
-   			   when GUID_TYPE => Item := Variant'(GUID_TYPE, True, Empty_Dimensions, ListOfGuid.Pointer'Input(Stream));
-   			   when BYTESTRING_TYPE => Item := Variant'(BYTESTRING_TYPE, True, Empty_Dimensions, ListOfByteString.Pointer'Input(Stream));
-   			   when XMLELEMENT_TYPE => Item := Variant'(XMLELEMENT_TYPE, True, Empty_Dimensions, ListOfXmlElement.Pointer'Input(Stream));
-   			   when NODEID_TYPE => Item := Variant'(NODEID_TYPE, True, Empty_Dimensions, ListOfNodeId.Pointer'Input(Stream));
-   			   when EXPANDEDNODEID_TYPE => Item := Variant'(EXPANDEDNODEID_TYPE, True, Empty_Dimensions, ListOfExpandedNodeId.Pointer'Input(Stream));
-   			   when STATUSCODE_TYPE => Item := Variant'(STATUSCODE_TYPE, True, Empty_Dimensions, ListOfStatusCode.Pointer'Input(Stream));
-   			   when QUALIFIEDNAME_TYPE => Item := Variant'(QUALIFIEDNAME_TYPE, True, Empty_Dimensions, ListOfQualifiedName.Pointer'Input(Stream));
-   			   when LOCALIZEDTEXT_TYPE => Item := Variant'(LOCALIZEDTEXT_TYPE, True, Empty_Dimensions, ListOfLocalizedText.Pointer'Input(Stream));
-   			   when EXTENSIONOBJECT_TYPE => Item := Variant'(EXTENSIONOBJECT_TYPE, True, Empty_Dimensions, ListOfExtensionObject.Pointer'Input(Stream));
-   			   when DATAVALUE_TYPE => Item := Variant'(DATAVALUE_TYPE, True, Empty_Dimensions, ListOfDataValue.Pointer'Input(Stream));
-   			   when VARIANT_TYPE => Item := Variant'(VARIANT_TYPE, True, Empty_Dimensions, ListOfVariant.Pointer'Input(Stream));
-   			   when DIAGNOSTICINFO_TYPE => Item := Variant'(DIAGNOSTICINFO_TYPE, True, Empty_Dimensions, ListOfDiagnosticInfo.Pointer'Input(Stream));
-   			end case;
-			null;
-   			if Encoding.HasArrayDimensions then
-   			   Item.ArrayDimensions := ListOfInt32.Nullable_Pointer'(ListOfInt32.Nullable_Pointer'Input(Stream));
-   			end if;
+			   case Byte2VariantType(Encoding_Byte) is
+				  when BOOLEAN_ARRAY_VARIANT => Item := Variant'(BOOLEAN_ARRAY_VARIANT, Empty_Dimensions, ListOfBoolean.Pointer'Input(Stream));
+				  when SBYTE_ARRAY_VARIANT => Item := Variant'(SBYTE_ARRAY_VARIANT, Empty_Dimensions, ListOfSByte.Pointer'Input(Stream));
+				  when BYTE_ARRAY_VARIANT => Item := Variant'(BYTE_ARRAY_VARIANT, Empty_Dimensions, ListOfByte.Pointer'Input(Stream));
+				  when INT16_ARRAY_VARIANT => Item := Variant'(INT16_ARRAY_VARIANT, Empty_Dimensions, ListOfInt16.Pointer'Input(Stream));
+				  when UINT16_ARRAY_VARIANT => Item := Variant'(UINT16_ARRAY_VARIANT, Empty_Dimensions, ListOfUInt16.Pointer'Input(Stream));
+				  when INT32_ARRAY_VARIANT => Item := Variant'(INT32_ARRAY_VARIANT, Empty_Dimensions, ListOfInt32.Pointer'Input(Stream));
+				  when UINT32_ARRAY_VARIANT => Item := Variant'(UINT32_ARRAY_VARIANT, Empty_Dimensions, ListOfUInt32.Pointer'Input(Stream));
+				  when INT64_ARRAY_VARIANT => Item := Variant'(INT64_ARRAY_VARIANT, Empty_Dimensions, ListOfInt64.Pointer'Input(Stream));
+				  when UINT64_ARRAY_VARIANT => Item := Variant'(UINT64_ARRAY_VARIANT, Empty_Dimensions, ListOfUInt64.Pointer'Input(Stream));
+				  when FLOAT_ARRAY_VARIANT => Item := Variant'(FLOAT_ARRAY_VARIANT, Empty_Dimensions, ListOfFloat.Pointer'Input(Stream));
+				  when DOUBLE_ARRAY_VARIANT => Item := Variant'(DOUBLE_ARRAY_VARIANT, Empty_Dimensions, ListOfDouble.Pointer'Input(Stream));
+				  when STRING_ARRAY_VARIANT => Item := Variant'(STRING_ARRAY_VARIANT, Empty_Dimensions, ListOfString.Pointer'Input(Stream));
+				  when DATETIME_ARRAY_VARIANT => Item := Variant'(DATETIME_ARRAY_VARIANT, Empty_Dimensions, ListOfDateTime.Pointer'Input(Stream));
+				  when GUID_ARRAY_VARIANT => Item := Variant'(GUID_ARRAY_VARIANT, Empty_Dimensions, ListOfGuid.Pointer'Input(Stream));
+				  when BYTESTRING_ARRAY_VARIANT => Item := Variant'(BYTESTRING_ARRAY_VARIANT, Empty_Dimensions, ListOfByteString.Pointer'Input(Stream));
+				  when XMLELEMENT_ARRAY_VARIANT => Item := Variant'(XMLELEMENT_ARRAY_VARIANT, Empty_Dimensions, ListOfXmlElement.Pointer'Input(Stream));
+				  when NODEID_ARRAY_VARIANT => Item := Variant'(NODEID_ARRAY_VARIANT, Empty_Dimensions, ListOfNodeId.Pointer'Input(Stream));
+				  when EXPANDEDNODEID_ARRAY_VARIANT => Item := Variant'(EXPANDEDNODEID_ARRAY_VARIANT, Empty_Dimensions, ListOfExpandedNodeId.Pointer'Input(Stream));
+				  when STATUSCODE_ARRAY_VARIANT => Item := Variant'(STATUSCODE_ARRAY_VARIANT, Empty_Dimensions, ListOfStatusCode.Pointer'Input(Stream));
+				  when QUALIFIEDNAME_ARRAY_VARIANT => Item := Variant'(QUALIFIEDNAME_ARRAY_VARIANT, Empty_Dimensions, ListOfQualifiedName.Pointer'Input(Stream));
+				  when LOCALIZEDTEXT_ARRAY_VARIANT => Item := Variant'(LOCALIZEDTEXT_ARRAY_VARIANT, Empty_Dimensions, ListOfLocalizedText.Pointer'Input(Stream));
+				  when EXTENSIONOBJECT_ARRAY_VARIANT => Item := Variant'(EXTENSIONOBJECT_ARRAY_VARIANT, Empty_Dimensions, ListOfExtensionObject.Pointer'Input(Stream));
+				  when DATAVALUE_ARRAY_VARIANT => Item := Variant'(DATAVALUE_ARRAY_VARIANT, Empty_Dimensions, ListOfDataValue.Pointer'Input(Stream));
+				  when VARIANT_ARRAY_VARIANT => Item := Variant'(VARIANT_ARRAY_VARIANT, Empty_Dimensions, ListOfVariant.Pointer'Input(Stream));
+				  when DIAGNOSTICINFO_ARRAY_VARIANT => Item := Variant'(DIAGNOSTICINFO_ARRAY_VARIANT, Empty_Dimensions, ListOfDiagnosticInfo.Pointer'Input(Stream));
+				  when others => null;
+			   end case;
+			   if With_ArrayDimensions then
+			   	  Item.ArrayDimensions := ListOfInt32.Nullable_Pointer'(ListOfInt32.Nullable_Pointer'Input(Stream));
+			   end if;
 			end;
    	  end case;
    end Binary_Read;
@@ -740,58 +734,56 @@ package body Types.BuiltIn is
    function Binary_Size(Item : in Variant) return Int32 is
 	  Size : Int32 := 1; -- with encoding
    begin
-   	  case Item.Is_Array is
-   		 when False =>
-   			case Item.Value_Type is
-   			   when BOOLEAN_TYPE | SBYTE_TYPE | BYTE_TYPE => Size := Size + 1;
-   			   when INT16_TYPE | UINT16_TYPE => Size := Size + 2;
-   			   when INT32_TYPE | UINT32_TYPE | FLOAT_TYPE | STATUSCODE_TYPE => Size := Size + 4;
-   			   when INT64_TYPE | UINT64_TYPE | DOUBLE_TYPE | DATETIME_TYPE => Size := Size + 8;
-   			   when STRING_TYPE => Size := Size + Binary_Size(Item.String_Value);
-   			   when GUID_TYPE => Size := Size + Binary_Size(Item.Guid_Value);
-   			   when BYTESTRING_TYPE => Size := Size + Binary_Size(Item.ByteString_Value);
-   			   when XMLELEMENT_TYPE => Size := Size + Binary_Size(Item.XmlElement_Value);
-   			   when NODEID_TYPE => Size := Size + Item.NodeId_Value.Binary_Size;
-   			   when EXPANDEDNODEID_TYPE => Size := Size + Item.ExpandedNodeId_Value.Binary_Size;
-   			   when QUALIFIEDNAME_TYPE => Size := Size + Item.QualifiedName_Value.Binary_Size;
-   			   when LOCALIZEDTEXT_TYPE => Size := Size + Item.LocalizedText_Value.Binary_Size;
-   			   when EXTENSIONOBJECT_TYPE => Size := Size + Item.ExtensionObject_Value.Binary_Size;
-   			   when DATAVALUE_TYPE => Size := Size + Item.DataValue_Value.Binary_Size;
-   			   when VARIANT_TYPE => Size := Size + Variant(Item.Variant_Value.Get.Data.all).Binary_Size;
-   			   when DIAGNOSTICINFO_TYPE => Size := Size + DiagnosticInfo(Item.DiagnosticInfo_Value.Get.Data.all).Binary_Size;
-   			end case;
-   		 when True =>
-   			case Item.Value_Type is
-   			   when BOOLEAN_TYPE => Size := Size + Item.Boolean_Values.Binary_Size;
-   			   when SBYTE_TYPE => Size := Size + Item.SByte_Values.Binary_Size;
-   			   when BYTE_TYPE => Size := Size + Item.Byte_Values.Binary_Size;
-   			   when INT16_TYPE => Size := Size + Item.Int16_Values.Binary_Size;
-   			   when UINT16_TYPE => Size := Size + Item.UInt16_Values.Binary_Size;
-   			   when INT32_TYPE => Size := Size + Item.Int32_Values.Binary_Size;
-   			   when UINT32_TYPE => Size := Size + Item.UInt32_Values.Binary_Size;
-   			   when INT64_TYPE => Size := Size + Item.Int64_Values.Binary_Size;
-   			   when UINT64_TYPE => Size := Size + Item.UInt64_Values.Binary_Size;
-   			   when FLOAT_TYPE => Size := Size + Item.Float_Values.Binary_Size;
-   			   when DOUBLE_TYPE => Size := Size + Item.Double_Values.Binary_Size;
-   			   when STRING_TYPE => Size := Size + Item.String_Values.Binary_Size;
-   			   when DATETIME_TYPE => Size := Size + Item.DateTime_Values.Binary_Size;
-   			   when GUID_TYPE => Size := Size + Item.Guid_Values.Binary_Size;
-   			   when BYTESTRING_TYPE => Size := Size + Item.ByteString_Values.Binary_Size;
-   			   when XMLELEMENT_TYPE => Size := Size + Item.XmlElement_Values.Binary_Size;
-   			   when NODEID_TYPE => Size := Size + Item.NodeId_Values.Binary_Size;
-   			   when EXPANDEDNODEID_TYPE => Size := Size + Item.ExpandedNodeId_Values.Binary_Size;
-   			   when STATUSCODE_TYPE => Size := Size + Item.StatusCode_Values.Binary_Size;
-   			   when QUALIFIEDNAME_TYPE => Size := Size + Item.QualifiedName_Values.Binary_Size;
-   			   when LOCALIZEDTEXT_TYPE => Size := Size + Item.LocalizedText_Values.Binary_Size;
-   			   when EXTENSIONOBJECT_TYPE => Size := Size + Item.ExtensionObject_Values.Binary_Size;
-   			   when DATAVALUE_TYPE => Size := Size + Item.DataValue_Values.Binary_Size;
-   			   when VARIANT_TYPE => Size := Size + Item.Variant_Values.Binary_Size;
-   			   when DIAGNOSTICINFO_TYPE => Size := Size + Item.DiagnosticInfo_Values.Binary_Size;
+	  case Item.Variant_Type is
+		 when BOOLEAN_VARIANT | SBYTE_VARIANT | BYTE_VARIANT => Size := Size + 1;
+		 when INT16_VARIANT | UINT16_VARIANT => Size := Size + 2;
+		 when INT32_VARIANT | UINT32_VARIANT | FLOAT_VARIANT | STATUSCODE_VARIANT => Size := Size + 4;
+		 when INT64_VARIANT | UINT64_VARIANT | DOUBLE_VARIANT | DATETIME_VARIANT => Size := Size + 8;
+		 when STRING_VARIANT => Size := Size + Binary_Size(Item.String_Value);
+		 when GUID_VARIANT => Size := Size + Binary_Size(Item.Guid_Value);
+		 when BYTESTRING_VARIANT => Size := Size + Binary_Size(Item.ByteString_Value);
+		 when XMLELEMENT_VARIANT => Size := Size + Binary_Size(Item.XmlElement_Value);
+		 when NODEID_VARIANT => Size := Size + Item.NodeId_Value.Binary_Size;
+		 when EXPANDEDNODEID_VARIANT => Size := Size + Item.ExpandedNodeId_Value.Binary_Size;
+		 when QUALIFIEDNAME_VARIANT => Size := Size + Item.QualifiedName_Value.Binary_Size;
+		 when LOCALIZEDTEXT_VARIANT => Size := Size + Item.LocalizedText_Value.Binary_Size;
+		 when EXTENSIONOBJECT_VARIANT => Size := Size + Item.ExtensionObject_Value.Binary_Size;
+		 when DATAVALUE_VARIANT => Size := Size + Item.DataValue_Value.Binary_Size;
+		 when VARIANT_VARIANT => Size := Size + Variant(Item.Variant_Value.Get.Data.all).Binary_Size;
+		 when DIAGNOSTICINFO_VARIANT => Size := Size + DiagnosticInfo(Item.DiagnosticInfo_Value.Get.Data.all).Binary_Size;
+   		 when others =>
+   			case Item.Variant_Type is
+   			   when BOOLEAN_ARRAY_VARIANT => Size := Size + Item.Boolean_Values.Binary_Size;
+   			   when SBYTE_ARRAY_VARIANT => Size := Size + Item.SByte_Values.Binary_Size;
+   			   when BYTE_ARRAY_VARIANT => Size := Size + Item.Byte_Values.Binary_Size;
+   			   when INT16_ARRAY_VARIANT => Size := Size + Item.Int16_Values.Binary_Size;
+   			   when UINT16_ARRAY_VARIANT => Size := Size + Item.UInt16_Values.Binary_Size;
+   			   when INT32_ARRAY_VARIANT => Size := Size + Item.Int32_Values.Binary_Size;
+   			   when UINT32_ARRAY_VARIANT => Size := Size + Item.UInt32_Values.Binary_Size;
+   			   when INT64_ARRAY_VARIANT => Size := Size + Item.Int64_Values.Binary_Size;
+   			   when UINT64_ARRAY_VARIANT => Size := Size + Item.UInt64_Values.Binary_Size;
+   			   when FLOAT_ARRAY_VARIANT => Size := Size + Item.Float_Values.Binary_Size;
+   			   when DOUBLE_ARRAY_VARIANT => Size := Size + Item.Double_Values.Binary_Size;
+   			   when STRING_ARRAY_VARIANT => Size := Size + Item.String_Values.Binary_Size;
+   			   when DATETIME_ARRAY_VARIANT => Size := Size + Item.DateTime_Values.Binary_Size;
+   			   when GUID_ARRAY_VARIANT => Size := Size + Item.Guid_Values.Binary_Size;
+   			   when BYTESTRING_ARRAY_VARIANT => Size := Size + Item.ByteString_Values.Binary_Size;
+   			   when XMLELEMENT_ARRAY_VARIANT => Size := Size + Item.XmlElement_Values.Binary_Size;
+   			   when NODEID_ARRAY_VARIANT => Size := Size + Item.NodeId_Values.Binary_Size;
+   			   when EXPANDEDNODEID_ARRAY_VARIANT => Size := Size + Item.ExpandedNodeId_Values.Binary_Size;
+   			   when STATUSCODE_ARRAY_VARIANT => Size := Size + Item.StatusCode_Values.Binary_Size;
+   			   when QUALIFIEDNAME_ARRAY_VARIANT => Size := Size + Item.QualifiedName_Values.Binary_Size;
+   			   when LOCALIZEDTEXT_ARRAY_VARIANT => Size := Size + Item.LocalizedText_Values.Binary_Size;
+   			   when EXTENSIONOBJECT_ARRAY_VARIANT => Size := Size + Item.ExtensionObject_Values.Binary_Size;
+   			   when DATAVALUE_ARRAY_VARIANT => Size := Size + Item.DataValue_Values.Binary_Size;
+   			   when VARIANT_ARRAY_VARIANT => Size := Size + Item.Variant_Values.Binary_Size;
+   			   when DIAGNOSTICINFO_ARRAY_VARIANT => Size := Size + Item.DiagnosticInfo_Values.Binary_Size;
+			   when others => null;
    			end case;
    			if not Item.ArrayDimensions.Is_Null Then
    			   Size := Size + Item.ArrayDimensions.Binary_Size;
    			end if;
-   	  end case;
+	  end case;
 	  return Size;
    end Binary_Size;
 

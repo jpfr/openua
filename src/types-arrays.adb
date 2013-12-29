@@ -7,13 +7,13 @@ package body Types.Arrays is
    ------------------------
    package body Elementary_Arrays is
 
-	  function Create (Value : not null access A) return Pointer is (Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value)));
+	  function Create (Value : not null access A) return Pointer is (Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value.all'Unchecked_Access)));
 	  function Get (Ptr : Pointer'Class) return Accessor is (Accessor'(Ada.Finalization.Controlled with Data => Ptr.Rep.Value, Rep => Ptr.Rep));
 
 	  function Create (Value : access A) return Nullable_Pointer is
 	  begin
 		 if Value /= null then
-			return Nullable_Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value));
+			return Nullable_Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value.all'Unchecked_Access));
 		 else
 			return Null_Pointer;
 		 end if;
@@ -81,7 +81,7 @@ package body Types.Arrays is
 	  begin
 		 if Size >= 0 then
 			declare
-			   subtype AST is A (Array_Index'First .. Array_Index'Val(Size));
+			   subtype AST is A (Array_Index'First .. Array_Index'Val(Size-1));
 			   Obj : constant access A := new AST;
 			begin
 			   AST'Read(Stream, Obj.all);
@@ -99,13 +99,13 @@ package body Types.Arrays is
    ------------------------
    package body UA_Builtin_Arrays is
 
-	  function Create (Value : not null access A) return Pointer is (Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value)));
+	  function Create (Value : not null access A) return Pointer is (Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value.all'Unchecked_Access)));
 	  function Get (Ptr : Pointer'Class) return Accessor is (Accessor'(Ada.Finalization.Controlled with Data => Ptr.Rep.Value, Rep => Ptr.Rep));
 
 	  function Create (Value : access A) return Nullable_Pointer is
 	  begin
 		 if Value /= null then
-			return Nullable_Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value));
+			return Nullable_Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value.all'Unchecked_Access));
 		 else
 			return Null_Pointer;
 		 end if;
@@ -179,7 +179,7 @@ package body Types.Arrays is
 	  begin
 		 if Size > 0 then
 			declare
-			   subtype AST is A (Array_Index'First .. Array_Index'Val(Size));
+			   subtype AST is A (Array_Index'First .. Array_Index'Val(Size-1));
 			   Obj : constant access A := new AST;
 			begin
 			   for Elem of Obj.all loop

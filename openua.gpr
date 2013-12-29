@@ -1,7 +1,7 @@
 project OpenUA is
 
    type Build_Modes is ("Release", "Debug");
-   Mode : Build_Modes := external ("Release", "Debug");
+   Mode : Build_Modes := external ("mode", "Debug");
    for Source_Dirs use ("src");
    for Exec_Dir use ".";
    for Main use ("test_types.adb");
@@ -13,8 +13,8 @@ project OpenUA is
 
    package Compiler is
       case Mode is
-         when "Debug" => for Default_Switches ("ada") use ("-g", "-gnato", "-gnatwa", "-gnatQ", "-gnat12");
-         when "Release" => for Default_Switches ("ada") use ("-gnatQ", "-gnatn", "-O2", "-gnat12");
+         when "Debug" => for Default_Switches ("ada") use ("-gnato", "-gnatwa", "-gnatQ", "-gnat12");
+         when "Release" => for Default_Switches ("ada") use ("-gnatQ", "-O2", "-gnatn", "gnat2012", "-flto", "-fdata-sections", "-ffunction-sections");
       end case;
    end Compiler;
 
@@ -24,6 +24,13 @@ project OpenUA is
          when "Release" => for Default_Switches ("ada") use ();
       end case;
    end Builder;
+
+   package Linker is
+      case Mode is
+         when "Debug" => null;
+         when "Release" => for Default_Switches ("ada") use ("-Wl,--gc-sections", "-flto");
+      end case;
+   end Linker;
 
    package Ide is
       for Compiler_Command ("ada") use "gnatmake";

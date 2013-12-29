@@ -7,13 +7,13 @@ package body Types.Smart_Pointers is
    ---------------------------------
    package body Elementary_Smart_Pointers is
 
-	  function Create (Value : not null access T) return Pointer is (Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value)));
+	  function Create (Value : not null access T) return Pointer is (Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value.all'Unchecked_Access)));
 	  function Get (Ptr : Pointer'Class) return Accessor is (Accessor'(Ada.Finalization.Controlled with Data => Ptr.Rep.Value, Rep => Ptr.Rep));
 
 	  function Create (Value : access T) return Nullable_Pointer is
 	  begin
 		 if Value /= null then
-		   return Nullable_Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value));
+		   return Nullable_Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value.all'Unchecked_Access));
 		 else
 			return Null_Pointer;
 		 end if;
@@ -63,13 +63,13 @@ package body Types.Smart_Pointers is
    --  UA_Builtin_Smart_Pointers  --
    ---------------------------------
    package body UA_Builtin_Smart_Pointers is
-	  function Create (Value : not null access T) return Pointer is (Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value)));
+	  function Create (Value : not null access T) return Pointer is (Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value.all'Unchecked_Access)));
 	  function Get (Ptr : Pointer'Class) return Accessor is (Accessor'(Ada.Finalization.Controlled with Data => Ptr.Rep.Value, Rep => Ptr.Rep));
 
 	  function Create (Value : access T) return Nullable_Pointer is
 	  begin
 		 if Value /= null then
-		   return Nullable_Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value));
+		   return Nullable_Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Value.all'Unchecked_Access));
 		 else
 			return Null_Pointer;
 		 end if;

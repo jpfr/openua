@@ -277,81 +277,93 @@ package Types.Builtin with Preelaborate is
    ---------------
    --  Variant  --
    ---------------
-   type VariantType is (BOOLEAN_TYPE, SBYTE_TYPE, BYTE_TYPE, INT16_TYPE, UINT16_TYPE, INT32_TYPE,
-						UINT32_TYPE, INT64_TYPE, UINT64_TYPE, FLOAT_TYPE, DOUBLE_TYPE, STRING_TYPE,
-						DATETIME_TYPE, GUID_TYPE, BYTESTRING_TYPE, XMLELEMENT_TYPE, NODEID_TYPE,
-						EXPANDEDNODEID_TYPE, STATUSCODE_TYPE, QUALIFIEDNAME_TYPE, LOCALIZEDTEXT_TYPE,
-						EXTENSIONOBJECT_TYPE, DATAVALUE_TYPE, VARIANT_TYPE, DIAGNOSTICINFO_TYPE);
-   for VariantType'Size use 6;
+   type VariantType is (BOOLEAN_VARIANT, SBYTE_VARIANT, BYTE_VARIANT, INT16_VARIANT, UINT16_VARIANT, INT32_VARIANT,
+						UINT32_VARIANT, INT64_VARIANT, UINT64_VARIANT, FLOAT_VARIANT, DOUBLE_VARIANT, STRING_VARIANT,
+						DATETIME_VARIANT, GUID_VARIANT, BYTESTRING_VARIANT, XMLELEMENT_VARIANT, NODEID_VARIANT,
+						EXPANDEDNODEID_VARIANT, STATUSCODE_VARIANT, QUALIFIEDNAME_VARIANT, LOCALIZEDTEXT_VARIANT,
+						EXTENSIONOBJECT_VARIANT, DATAVALUE_VARIANT, VARIANT_VARIANT, DIAGNOSTICINFO_VARIANT,
+						BOOLEAN_ARRAY_VARIANT, SBYTE_ARRAY_VARIANT, BYTE_ARRAY_VARIANT, INT16_ARRAY_VARIANT,
+						UINT16_ARRAY_VARIANT, INT32_ARRAY_VARIANT, UINT32_ARRAY_VARIANT, INT64_ARRAY_VARIANT,
+						UINT64_ARRAY_VARIANT, FLOAT_ARRAY_VARIANT, DOUBLE_ARRAY_VARIANT, STRING_ARRAY_VARIANT,
+						DATETIME_ARRAY_VARIANT, GUID_ARRAY_VARIANT, BYTESTRING_ARRAY_VARIANT, XMLELEMENT_ARRAY_VARIANT,
+						NODEID_ARRAY_VARIANT, EXPANDEDNODEID_ARRAY_VARIANT, STATUSCODE_ARRAY_VARIANT, QUALIFIEDNAME_ARRAY_VARIANT,
+						LOCALIZEDTEXT_ARRAY_VARIANT, EXTENSIONOBJECT_ARRAY_VARIANT, DATAVALUE_ARRAY_VARIANT, VARIANT_ARRAY_VARIANT,
+						DIAGNOSTICINFO_ARRAY_VARIANT);
+   for VariantType'Size use 8; -- for conversion to Byte
    for VariantType use
-     (BOOLEAN_TYPE => 1, SBYTE_TYPE => 2, BYTE_TYPE => 3, INT16_TYPE => 4,
-      UINT16_TYPE => 5, INT32_TYPE => 6, UINT32_TYPE => 7, INT64_TYPE => 8,
-      UINT64_TYPE => 9, FLOAT_TYPE => 10, DOUBLE_TYPE => 11, STRING_TYPE => 12,
-      DATETIME_TYPE => 13, GUID_TYPE => 14, BYTESTRING_TYPE => 15, XMLELEMENT_TYPE => 16,
-      NODEID_TYPE => 17, EXPANDEDNODEID_TYPE => 18, STATUSCODE_TYPE => 19, QUALIFIEDNAME_TYPE => 20,
-      LOCALIZEDTEXT_TYPE => 21, EXTENSIONOBJECT_TYPE => 22, DATAVALUE_TYPE => 23, VARIANT_TYPE => 24,
-      DIAGNOSTICINFO_TYPE => 25);
+     (BOOLEAN_VARIANT => 1, SBYTE_VARIANT => 2, BYTE_VARIANT => 3, INT16_VARIANT => 4,
+      UINT16_VARIANT => 5, INT32_VARIANT => 6, UINT32_VARIANT => 7, INT64_VARIANT => 8,
+      UINT64_VARIANT => 9, FLOAT_VARIANT => 10, DOUBLE_VARIANT => 11, STRING_VARIANT => 12,
+      DATETIME_VARIANT => 13, GUID_VARIANT => 14, BYTESTRING_VARIANT => 15, XMLELEMENT_VARIANT => 16,
+      NODEID_VARIANT => 17, EXPANDEDNODEID_VARIANT => 18, STATUSCODE_VARIANT => 19, QUALIFIEDNAME_VARIANT => 20,
+      LOCALIZEDTEXT_VARIANT => 21, EXTENSIONOBJECT_VARIANT => 22, DATAVALUE_VARIANT => 23, VARIANT_VARIANT => 24,
+      DIAGNOSTICINFO_VARIANT => 25,
+     BOOLEAN_ARRAY_VARIANT => 129, SBYTE_ARRAY_VARIANT => 130, BYTE_ARRAY_VARIANT => 131, INT16_ARRAY_VARIANT => 132,
+      UINT16_ARRAY_VARIANT => 133, INT32_ARRAY_VARIANT => 134, UINT32_ARRAY_VARIANT => 135, INT64_ARRAY_VARIANT => 136,
+      UINT64_ARRAY_VARIANT => 137, FLOAT_ARRAY_VARIANT => 138, DOUBLE_ARRAY_VARIANT => 139, STRING_ARRAY_VARIANT => 140,
+      DATETIME_ARRAY_VARIANT => 141, GUID_ARRAY_VARIANT => 142, BYTESTRING_ARRAY_VARIANT => 143, XMLELEMENT_ARRAY_VARIANT => 144,
+      NODEID_ARRAY_VARIANT => 145, EXPANDEDNODEID_ARRAY_VARIANT => 146, STATUSCODE_ARRAY_VARIANT => 147, QUALIFIEDNAME_ARRAY_VARIANT => 148,
+      LOCALIZEDTEXT_ARRAY_VARIANT => 149, EXTENSIONOBJECT_ARRAY_VARIANT => 150, DATAVALUE_ARRAY_VARIANT => 151, VARIANT_ARRAY_VARIANT => 152,
+      DIAGNOSTICINFO_ARRAY_VARIANT => 153);
 
-   type Variant (Value_Type : VariantType; Is_Array : Standard.Boolean) is new Variant_Base and UA_Builtin with record
-   	 case Is_Array is
-   		when False =>
-   		   case Value_Type is
-   			  when BOOLEAN_TYPE => Boolean_Value : Boolean;
-   			  when SBYTE_TYPE => SByte_Value : SByte;
-   			  when BYTE_TYPE => Byte_Value : Byte;
-   			  when INT16_TYPE => Int16_Value : Int16;
-   			  when UINT16_TYPE => UInt16_Value : UInt16;
-   			  when INT32_TYPE => Int32_Value : Int32;
-   			  when UINT32_TYPE => UInt32_Value : UInt32;
-   			  when INT64_TYPE => Int64_Value : Int64;
-   			  when UINT64_TYPE => UInt64_Value : UInt64;
-   			  when FLOAT_TYPE => Float_Value : Float;
-   			  when DOUBLE_TYPE => Double_Value : Double;
-   			  when STRING_TYPE => String_Value : String;
-   			  when DATETIME_TYPE => DateTime_Value : DateTime;
-   			  when GUID_TYPE => Guid_Value : Guid;
-   			  when BYTESTRING_TYPE => ByteString_Value : ByteString;
-   			  when XMLELEMENT_TYPE => XmlElement_Value : XmlElement;
-   			  when NODEID_TYPE => NodeId_Value : NodeIds.Pointer;
-   			  when EXPANDEDNODEID_TYPE => ExpandedNodeId_Value : ExpandedNodeIds.Pointer;
-   			  when STATUSCODE_TYPE => StatusCode_Value : StatusCode;
-   			  when QUALIFIEDNAME_TYPE => QualifiedName_Value : QualifiedNames.Pointer;
-   			  when LOCALIZEDTEXT_TYPE => LocalizedText_Value : LocalizedTexts.Pointer;
-   			  when EXTENSIONOBJECT_TYPE => ExtensionObject_Value : ExtensionObjects.Pointer;
-   			  when DATAVALUE_TYPE => DataValue_Value : DataValues.Pointer;
-   			  when VARIANT_TYPE => Variant_Value : Variants.Pointer;
-   			  when DIAGNOSTICINFO_TYPE => DiagnosticInfo_Value : DiagnosticInfos.Pointer;
-   		   end case;
-   		when True =>
-   		   ArrayDimensions : ListOfInt32.Nullable_Pointer;
-   		   case Value_Type is
-   			  when BOOLEAN_TYPE => Boolean_Values : ListOfBoolean.Pointer;
-   			  when SBYTE_TYPE => SByte_Values : ListOfSByte.Pointer;
-   			  when BYTE_TYPE => Byte_Values : ListOfByte.Pointer;
-   			  when INT16_TYPE => Int16_Values : ListOfInt16.Pointer;
-   			  when UINT16_TYPE => UInt16_Values : ListOfUInt16.Pointer;
-   			  when INT32_TYPE => Int32_Values : ListOfInt32.Pointer;
-   			  when UINT32_TYPE => UInt32_Values : ListOfUInt32.Pointer;
-   			  when INT64_TYPE => Int64_Values : ListOfInt64.Pointer;
-   			  when UINT64_TYPE => UInt64_Values : ListOfUInt64.Pointer;
-   			  when FLOAT_TYPE => Float_Values : ListOfFloat.Pointer;
-   			  when DOUBLE_TYPE => Double_Values : ListOfDouble.Pointer;
-   			  when STRING_TYPE => String_Values : ListOfString.Pointer;
-   			  when DATETIME_TYPE => DateTime_Values : ListOfDateTime.Pointer;
-   			  when GUID_TYPE => Guid_Values : ListOfGuid.Pointer;
-   			  when BYTESTRING_TYPE => ByteString_Values : ListOfByteString.Pointer;
-   			  when XMLELEMENT_TYPE => XmlElement_Values : ListOfXmlElement.Pointer;
-   			  when NODEID_TYPE => NodeId_Values : ListOfNodeId.Pointer;
-   			  when EXPANDEDNODEID_TYPE => ExpandedNodeId_Values : ListOfExpandedNodeId.Pointer;
-   			  when STATUSCODE_TYPE => StatusCode_Values : ListOfStatusCode.Pointer;
-   			  when QUALIFIEDNAME_TYPE => QualifiedName_Values : ListOfQualifiedName.Pointer;
-   			  when LOCALIZEDTEXT_TYPE => LocalizedText_Values : ListOfLocalizedText.Pointer;
-   			  when EXTENSIONOBJECT_TYPE => ExtensionObject_Values : ListOfExtensionObject.Pointer;
-   			  when DATAVALUE_TYPE => DataValue_Values : ListOfDataValue.Pointer;
-   			  when VARIANT_TYPE => Variant_Values : ListOfVariant.Pointer;
-   			  when DIAGNOSTICINFO_TYPE => DiagnosticInfo_Values : ListOfDiagnosticInfo.Pointer;
-   		   end case;
-   	 end case;
+   type Variant (Variant_Type : VariantType) is new Variant_Base and UA_Builtin with record
+	  case Variant_Type is
+		 when BOOLEAN_VARIANT => Boolean_Value : Boolean;
+		 when SBYTE_VARIANT => SByte_Value : SByte;
+		 when BYTE_VARIANT => Byte_Value : Byte;
+		 when INT16_VARIANT => Int16_Value : Int16;
+		 when UINT16_VARIANT => UInt16_Value : UInt16;
+		 when INT32_VARIANT => Int32_Value : Int32;
+		 when UINT32_VARIANT => UInt32_Value : UInt32;
+		 when INT64_VARIANT => Int64_Value : Int64;
+		 when UINT64_VARIANT => UInt64_Value : UInt64;
+		 when FLOAT_VARIANT => Float_Value : Float;
+		 when DOUBLE_VARIANT => Double_Value : Double;
+		 when STRING_VARIANT => String_Value : String;
+		 when DATETIME_VARIANT => DateTime_Value : DateTime;
+		 when GUID_VARIANT => Guid_Value : Guid;
+		 when BYTESTRING_VARIANT => ByteString_Value : ByteString;
+		 when XMLELEMENT_VARIANT => XmlElement_Value : XmlElement;
+		 when NODEID_VARIANT => NodeId_Value : NodeIds.Pointer;
+		 when EXPANDEDNODEID_VARIANT => ExpandedNodeId_Value : ExpandedNodeIds.Pointer;
+		 when STATUSCODE_VARIANT => StatusCode_Value : StatusCode;
+		 when QUALIFIEDNAME_VARIANT => QualifiedName_Value : QualifiedNames.Pointer;
+		 when LOCALIZEDTEXT_VARIANT => LocalizedText_Value : LocalizedTexts.Pointer;
+		 when EXTENSIONOBJECT_VARIANT => ExtensionObject_Value : ExtensionObjects.Pointer;
+		 when DATAVALUE_VARIANT => DataValue_Value : DataValues.Pointer;
+		 when VARIANT_VARIANT => Variant_Value : Variants.Pointer;
+		 when DIAGNOSTICINFO_VARIANT => DiagnosticInfo_Value : DiagnosticInfos.Pointer;
+		 when others =>
+			ArrayDimensions : ListOfInt32.Nullable_Pointer;
+			case Variant_Type is
+			   when BOOLEAN_ARRAY_VARIANT => Boolean_Values : ListOfBoolean.Pointer;
+			   when SBYTE_ARRAY_VARIANT => SByte_Values : ListOfSByte.Pointer;
+			   when BYTE_ARRAY_VARIANT => Byte_Values : ListOfByte.Pointer;
+			   when INT16_ARRAY_VARIANT => Int16_Values : ListOfInt16.Pointer;
+			   when UINT16_ARRAY_VARIANT => UInt16_Values : ListOfUInt16.Pointer;
+			   when INT32_ARRAY_VARIANT => Int32_Values : ListOfInt32.Pointer;
+			   when UINT32_ARRAY_VARIANT => UInt32_Values : ListOfUInt32.Pointer;
+			   when INT64_ARRAY_VARIANT => Int64_Values : ListOfInt64.Pointer;
+			   when UINT64_ARRAY_VARIANT => UInt64_Values : ListOfUInt64.Pointer;
+			   when FLOAT_ARRAY_VARIANT => Float_Values : ListOfFloat.Pointer;
+			   when DOUBLE_ARRAY_VARIANT => Double_Values : ListOfDouble.Pointer;
+			   when STRING_ARRAY_VARIANT => String_Values : ListOfString.Pointer;
+			   when DATETIME_ARRAY_VARIANT => DateTime_Values : ListOfDateTime.Pointer;
+			   when GUID_ARRAY_VARIANT => Guid_Values : ListOfGuid.Pointer;
+			   when BYTESTRING_ARRAY_VARIANT => ByteString_Values : ListOfByteString.Pointer;
+			   when XMLELEMENT_ARRAY_VARIANT => XmlElement_Values : ListOfXmlElement.Pointer;
+			   when NODEID_ARRAY_VARIANT => NodeId_Values : ListOfNodeId.Pointer;
+			   when EXPANDEDNODEID_ARRAY_VARIANT => ExpandedNodeId_Values : ListOfExpandedNodeId.Pointer;
+			   when STATUSCODE_ARRAY_VARIANT => StatusCode_Values : ListOfStatusCode.Pointer;
+			   when QUALIFIEDNAME_ARRAY_VARIANT => QualifiedName_Values : ListOfQualifiedName.Pointer;
+			   when LOCALIZEDTEXT_ARRAY_VARIANT => LocalizedText_Values : ListOfLocalizedText.Pointer;
+			   when EXTENSIONOBJECT_ARRAY_VARIANT => ExtensionObject_Values : ListOfExtensionObject.Pointer;
+			   when DATAVALUE_ARRAY_VARIANT => DataValue_Values : ListOfDataValue.Pointer;
+			   when VARIANT_ARRAY_VARIANT => Variant_Values : ListOfVariant.Pointer;
+			   when DIAGNOSTICINFO_ARRAY_VARIANT => DiagnosticInfo_Values : ListOfDiagnosticInfo.Pointer;
+			   when others => null;
+			end case;
+	  end case;
    end record;
 
    function NodeId_Nr(Item : in Variant) return UInt16 is (SID.Undefined);
