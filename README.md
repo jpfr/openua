@@ -2,17 +2,19 @@ openua
 ======
 
 **openua** aims to become an open-source implementation of (one of the smaller profiles of) the OPC UA binary protocol.
-openua is written in Ada (2012). This may seem like an odd choice. However, Ada has some important advantages in this context:
+openua is written in Ada (2012). This has the following advantages:
+
 
 * Fast
 * Can be linked with C-code (and interfaced to many other languages)
+* Multi-plattform code (Win/Linux/Embedded, big & small-endian)
 * No buffer overflows and no memory leaks (you can have those, but it is way easier to write safe code than in C)
 * Built-in support for parallelism/concurrency
 * Can be certified for high-risk applications (e.g. EAL)
 
 Status
 ------
-Currently, openua supports only reading/writing the UA built-in types. This includes handling of arrays and pointers in a memory-safe way. **Beware! This is pre-alpha code.**
+Currently, openua supports only reading/writing (all) data types defined in the UA standard from/to a binary stream. This includes handling of arrays and variable-size objects in a memory-safe way.
 
 Examples
 --------

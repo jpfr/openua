@@ -21,14 +21,14 @@ package body Types.BuiltIn is
    --  NodeId  --
    --------------
    type NodeId_Identifier is record
-      IdentifierType   : NodeIdType;
-      Has_ServerIndex  : Standard.Boolean;
-      Has_NamespaceUri : Standard.Boolean;
+      Identifier_Type   : NodeIdType;
+      Has_Server_Index  : Standard.Boolean;
+      Has_Namespace_Uri : Standard.Boolean;
    end record;
    for NodeId_Identifier use record
-      IdentifierType   at 0 range 0 .. 5;
-      Has_ServerIndex  at 0 range 6 .. 6;
-      Has_NamespaceUri at 0 range 7 .. 7;
+      Identifier_Type   at 0 range 0 .. 5;
+      Has_Server_Index  at 0 range 6 .. 6;
+      Has_Namespace_Uri at 0 range 7 .. 7;
    end record;
    for NodeId_Identifier'Size use 8;
 
@@ -59,7 +59,7 @@ package body Types.BuiltIn is
 		 when NUMERIC_NODEID => return 2 + 8;
 		 when STRING_NODEID => return 2 + Binary_Size(Item.String_Identifier);
 		 when GUID_NODEID => return 2 + 8;
-		 when BYTESTRING_NODEID => return 2 + Binary_Size(Item.ByteString_Identifier);
+		 when BYTESTRING_NODEID => return 2 + Binary_Size(Item.Byte_String_Identifier);
 	  end case;
    end Binary_Size;
 
@@ -77,20 +77,20 @@ package body Types.BuiltIn is
 			UInt32'Write(Stream, Item.Numeric_Identifier);
 		 when STRING_NODEID =>
 			UInt16'Write(Stream, Item.Namespace);
-			Binary_Write(Stream, Item.String_Identifier);
+			NotNullString'Write(Stream, Item.String_Identifier);
 		 when GUID_NODEID =>
 			UInt16'Write(Stream, Item.Namespace);
 			Guid'Write(Stream, Item.Guid_Identifier);
 		 when BYTESTRING_NODEID =>
 			UInt16'Write(Stream, Item.Namespace);
-			Binary_Write(Stream, Item.ByteString_Identifier);
+			NotNullByteString'Write(Stream, Item.Byte_String_Identifier);
 	  end case;
    end Binary_Write;
 
    procedure Binary_Read(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out NodeId) is
       Identifier : constant NodeId_Identifier := NodeId_Identifier'Input(Stream);
    begin
-	  case Identifier.IdentifierType is
+	  case Identifier.Identifier_Type is
 		 when TWOBYTE_NODEID => Item := (TWOBYTE_NODEID, Byte'Input(Stream));
 		 when FOURBYTE_NODEID => Item := (FOURBYTE_NODEID, Byte'Input(Stream), UInt16'Input(Stream));
 		 when NUMERIC_NODEID => Item := (NUMERIC_NODEID, UInt16'Input(Stream), UInt32'Input(Stream));
@@ -114,7 +114,7 @@ package body Types.BuiltIn is
    				  when NUMERIC_NODEID => return A.Numeric_Identifier = B.Numeric_Identifier;
    				  when STRING_NODEID => return A.String_Identifier = B.String_Identifier;
    				  when GUID_NODEID => return A.Guid_Identifier = B.Guid_Identifier;
-   				  when BYTESTRING_NODEID => return A.ByteString_Identifier = B.ByteString_Identifier;
+   				  when BYTESTRING_NODEID => return A.Byte_String_Identifier = B.Byte_String_Identifier;
    				  when others => return False;
    			   end case;
    		 end case;
@@ -144,10 +144,10 @@ package body Types.BuiltIn is
    function Binary_Size (Item : ExpandedNodeId) return Int32 is
    	  Size : Int32 := 0;
    begin
-   	  if not Item.NamespaceUri.Is_Null then
-   		 Size := Size + Binary_Size(Item.NamespaceUri);
+   	  if not Item.Namespace_Uri.Is_Null then
+   		 Size := Size + Binary_Size(Item.Namespace_Uri);
    	  end if;
-   	  if not Item.ServerIndex.Is_Null then
+   	  if not Item.Server_Index.Is_Null then
    		 Size := Size + 4;
    	  end if;
    	  case Item.NodeId_Type is
@@ -159,7 +159,7 @@ package body Types.BuiltIn is
                when NUMERIC_NODEID => Size := Size + 4;
                when STRING_NODEID => Size := Size + Binary_Size (Item.String_Identifier);
                when GUID_NODEID => Size := Size + 8;
-               when BYTESTRING_NODEID => Size := Size + Binary_Size(Item.ByteString_Identifier);
+               when BYTESTRING_NODEID => Size := Size + Binary_Size(Item.Byte_String_Identifier);
                when others =>
                   null;
             end case;
@@ -169,7 +169,7 @@ package body Types.BuiltIn is
 
    procedure Binary_Write(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : in ExpandedNodeId) is
    begin
-      Binary_Write(Stream, NodeId_Identifier'(Item.NodeId_Type, not Item.ServerIndex.Is_Null, not Item.NamespaceUri.Is_Null));
+      Binary_Write(Stream, NodeId_Identifier'(Item.NodeId_Type, not Item.Server_Index.Is_Null, not Item.Namespace_Uri.Is_Null));
       case Item.NodeId_Type is
    		 when TWOBYTE_NODEID =>
    			Byte'Write(Stream, Item.Byte_Identifier);
@@ -181,29 +181,29 @@ package body Types.BuiltIn is
    			UInt32'Write(Stream, Item.Numeric_Identifier);
    		 when STRING_NODEID =>
    			UInt16'Write(Stream, Item.Namespace);
-   			Binary_Write(Stream, Item.String_Identifier);
+   			NotNullString'Write(Stream, Item.String_Identifier);
    		 when GUID_NODEID =>
    			UInt16'Write(Stream, Item.Namespace);
    		    Guid'Write(Stream, Item.Guid_Identifier);
    		 when BYTESTRING_NODEID =>
    			UInt16'Write(Stream, Item.Namespace);
-   			Binary_Write(Stream, Item.ByteString_Identifier);
+   			NotNullByteString'Write(Stream, Item.Byte_String_Identifier);
       end case;
-      if not Item.NamespaceUri.Is_Null then
-         Binary_Write(Stream, Item.NamespaceUri);
+      if not Item.Namespace_Uri.Is_Null then
+         String'Write(Stream, Item.Namespace_Uri);
       end if;
-      if not Item.ServerIndex.Is_Null then
-         UInt32'Write(Stream, Item.ServerIndex.Get);
+      if not Item.Server_Index.Is_Null then
+         UInt32'Write(Stream, Item.Server_Index.Get);
       end if;
    end Binary_Write;
 
    procedure Binary_Read(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out ExpandedNodeId) is
       Identifier : constant NodeId_Identifier := NodeId_Identifier'Input(Stream);
-      NamespaceUri : String := Create(null);
-      ServerIndex : UInt32s.Nullable_Pointer := Uint32s.Null_Pointer;
-      Base_Node : NodeId(Identifier.IdentifierType);
+      Namespace_Uri : String := Create(null);
+      Server_Index : UInt32s.Nullable_Pointer := Uint32s.Null_Pointer;
+      Base_Node : NodeId(Identifier.Identifier_Type);
    begin
-      case Identifier.IdentifierType is
+      case Identifier.Identifier_Type is
    		 when TWOBYTE_NODEID => Base_Node := (TWOBYTE_NODEID, Byte'Input(Stream));
    		 when FOURBYTE_NODEID => Base_Node := (FOURBYTE_NODEID, Byte'Input(Stream), UInt16'Input(Stream));
    		 when NUMERIC_NODEID => Base_Node := (NUMERIC_NODEID, UInt16'Input(Stream), UInt32'Input(Stream));
@@ -211,19 +211,19 @@ package body Types.BuiltIn is
    		 when GUID_NODEID => Base_Node := (GUID_NODEID, UInt16'Input(Stream), Guid'Input(Stream));
    		 when BYTESTRING_NODEID => Base_Node := (BYTESTRING_NODEID, UInt16'Input(Stream), NotNullByteString'Input(Stream));
       end case;
-      if Identifier.Has_NamespaceUri then
-   		 NamespaceUri := String'Input(Stream);
+      if Identifier.Has_Namespace_Uri then
+   		 Namespace_Uri := String'Input(Stream);
       end if;
-      if Identifier.Has_ServerIndex then
-         ServerIndex := UInt32s.Create(new UInt32'(UInt32'Input(Stream)));
+      if Identifier.Has_Server_Index then
+         Server_Index := UInt32s.Create(new UInt32'(UInt32'Input(Stream)));
       end if;
       case Base_Node.NodeId_Type is
-         when TWOBYTE_NODEID => Item := (TWOBYTE_NODEID, Base_Node.Byte_Identifier, NamespaceUri, ServerIndex);
-         when FOURBYTE_NODEID => Item := (FOURBYTE_NODEID, Base_Node.Byte_Namespace, Base_Node.UInt16_Identifier, NamespaceUri, ServerIndex);
-         when NUMERIC_NODEID => Item := (NUMERIC_NODEID, Base_Node.Namespace, Base_Node.Numeric_Identifier, NamespaceUri, ServerIndex);
-         when STRING_NODEID => Item := (STRING_NODEID, Base_Node.Namespace, Base_Node.String_Identifier, NamespaceUri, ServerIndex);
-         when GUID_NODEID => Item := (GUID_NODEID, Base_Node.Namespace, Base_Node.Guid_Identifier, NamespaceUri, ServerIndex);
-         when BYTESTRING_NODEID => Item := (BYTESTRING_NODEID, Base_Node.Namespace, Base_Node.ByteString_Identifier, NamespaceUri, ServerIndex);
+         when TWOBYTE_NODEID => Item := (TWOBYTE_NODEID, Base_Node.Byte_Identifier, Namespace_Uri, Server_Index);
+         when FOURBYTE_NODEID => Item := (FOURBYTE_NODEID, Base_Node.Byte_Namespace, Base_Node.UInt16_Identifier, Namespace_Uri, Server_Index);
+         when NUMERIC_NODEID => Item := (NUMERIC_NODEID, Base_Node.Namespace, Base_Node.Numeric_Identifier, Namespace_Uri, Server_Index);
+         when STRING_NODEID => Item := (STRING_NODEID, Base_Node.Namespace, Base_Node.String_Identifier, Namespace_Uri, Server_Index);
+         when GUID_NODEID => Item := (GUID_NODEID, Base_Node.Namespace, Base_Node.Guid_Identifier, Namespace_Uri, Server_Index);
+         when BYTESTRING_NODEID => Item := (BYTESTRING_NODEID, Base_Node.Namespace, Base_Node.Byte_String_Identifier, Namespace_Uri, Server_Index);
       end case;
    end Binary_Read;
    
@@ -231,22 +231,22 @@ package body Types.BuiltIn is
    --  DiagnosticInfo  --
    ----------------------
    type DiagnosticInfo_Encoding is record
-      SymbolicId          : Standard.Boolean;
-      NamespaceUri        : Standard.Boolean;
-      LocalizedText       : Standard.Boolean;
+      Symbolic_Id          : Standard.Boolean;
+      Namespace_Uri        : Standard.Boolean;
+      Localized_Text       : Standard.Boolean;
       Locale              : Standard.Boolean;
-      AdditionalInfo      : Standard.Boolean;
-      InnerStatusCode     : Standard.Boolean;
-      InnerDiagnosticInfo : Standard.Boolean;
+      Additional_Info      : Standard.Boolean;
+      Inner_Status_Code     : Standard.Boolean;
+      Inner_Diagnostic_Info : Standard.Boolean;
    end record;
    for DiagnosticInfo_Encoding use record
-      SymbolicId          at 0 range 0 .. 0;
-      NamespaceUri        at 0 range 1 .. 1;
-      LocalizedText       at 0 range 2 .. 2;
+      Symbolic_Id          at 0 range 0 .. 0;
+      Namespace_Uri        at 0 range 1 .. 1;
+      Localized_Text       at 0 range 2 .. 2;
       Locale              at 0 range 3 .. 3;
-      AdditionalInfo      at 0 range 4 .. 4;
-      InnerStatusCode     at 0 range 5 .. 5;
-      InnerDiagnosticInfo at 0 range 6 .. 6;
+      Additional_Info      at 0 range 4 .. 4;
+      Inner_Status_Code     at 0 range 5 .. 5;
+      Inner_Diagnostic_Info at 0 range 6 .. 6;
    end record;
    for DiagnosticInfo_Encoding'Size use 8;
 
@@ -272,78 +272,78 @@ package body Types.BuiltIn is
    function Binary_Size(Item : DiagnosticInfo) return Int32 is
    	  Size : Int32 := 1; -- Encoding Item
    begin
-   	  if not Item.SymbolicId.Is_Null then
+   	  if not Item.Symbolic_Id.Is_Null then
    	  	 Size := Size + 4;
    	  end if;
-   	  if not Item.NamespaceUri.Is_Null then
+   	  if not Item.Namespace_Uri.Is_Null then
    	  	 Size := Size + 4;
    	  end if;
-   	  if not Item.LocalizedText.Is_Null then
+   	  if not Item.Localized_Text.Is_Null then
    	  	 Size := Size + 4;
    	  end if;
    	  if not Item.Locale.Is_Null then
    	  	 Size := Size + 4;
    	  end if;
-   	  if not Item.AdditionalInfo.Is_Null then
-   	  	 Size := Size + Binary_Size(Item.AdditionalInfo);
+   	  if not Item.Additional_Info.Is_Null then
+   	  	 Size := Size + Binary_Size(Item.Additional_Info);
    	  end if;
-   	  if not Item.InnerStatusCode.Is_Null then
+   	  if not Item.Inner_Status_Code.Is_Null then
    	  	 Size := Size + 8;
    	  end if;
-   	  if not Item.InnerDiagnostiCinfo.Is_Null then
-   	  	 Size := Size + Binary_Size(DiagnosticInfo(Item.InnerDiagnosticInfo.Get.Data.all));
+   	  if not Item.Inner_Diagnostic_Info.Is_Null then
+   	  	 Size := Size + Binary_Size(DiagnosticInfo(Item.Inner_Diagnostic_Info.Get.Data.all));
    	  end if;
    	  return Size;
    end Binary_Size;
 
    procedure Binary_Write(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : in DiagnosticInfo) is
-      Encoding : constant DiagnosticInfo_Encoding := (not Item.SymbolicId.Is_Null, not Item.NamespaceUri.Is_Null, not Item.LocalizedText.Is_Null,
-                                                      not Item.Locale.Is_Null, not Item.AdditionalInfo.Is_Null, not Item.InnerStatusCode.Is_Null,
-                                                      not Item.InnerDiagnosticInfo.Is_Null);
+      Encoding : constant DiagnosticInfo_Encoding := (not Item.Symbolic_Id.Is_Null, not Item.Namespace_Uri.Is_Null, not Item.Localized_Text.Is_Null,
+                                                      not Item.Locale.Is_Null, not Item.Additional_Info.Is_Null, not Item.Inner_Status_Code.Is_Null,
+                                                      not Item.Inner_Diagnostic_Info.Is_Null);
    begin
       Binary_Write(Stream, Encoding);
-      if not Item.SymbolicId.Is_Null then
-         Int32'Write(Stream, Item.SymbolicId.Get);
+      if not Item.Symbolic_Id.Is_Null then
+         Int32'Write(Stream, Item.Symbolic_Id.Get);
       end if;
-      if not Item.NamespaceUri.Is_Null then
-         Int32'Write(Stream, Item.NamespaceUri.Get);
+      if not Item.Namespace_Uri.Is_Null then
+         Int32'Write(Stream, Item.Namespace_Uri.Get);
       end if;
-      if not Item.LocalizedText.Is_Null then
-         Int32'Write(Stream, Item.LocalizedText.Get);
+      if not Item.Localized_Text.Is_Null then
+         Int32'Write(Stream, Item.Localized_Text.Get);
       end if;
       if not Item.Locale.Is_Null then
          Int32'Write(Stream, Item.Locale.Get);
       end if;
-      if not Item.AdditionalInfo.Is_Null then
-         String'Write(Stream, Item.AdditionalInfo);
+      if not Item.Additional_Info.Is_Null then
+         String'Write(Stream, Item.Additional_Info);
       end if;
-      if not Item.InnerStatusCode.Is_Null then
-         StatusCode'Write(Stream, Item.InnerStatusCode.Get);
+      if not Item.Inner_Status_Code.Is_Null then
+         StatusCode'Write(Stream, Item.Inner_Status_Code.Get);
       end if;
-      if not Item.InnerDiagnosticInfo.Is_Null then
-         Binary_Write(Stream, DiagnosticInfo(Item.InnerDiagnosticInfo.Get.Data.all));
+      if not Item.Inner_Diagnostic_Info.Is_Null then
+         Binary_Write(Stream, DiagnosticInfo(Item.Inner_Diagnostic_Info.Get.Data.all));
       end if;
    end Binary_Write;
 
    procedure Binary_Read(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out DiagnosticInfo) is
       Encoding : constant DiagnosticInfo_Encoding := DiagnosticInfo_Encoding'Input(Stream);
    begin
-      if Encoding.SymbolicId then
-         Item.SymbolicId := Int32s.Create(new Int32'(Int32'Input(Stream)));
+      if Encoding.Symbolic_Id then
+         Item.Symbolic_Id := Int32s.Create(new Int32'(Int32'Input(Stream)));
    	  else
-   	  	 Item.SymbolicId := Int32s.Null_Pointer;
+   	  	 Item.Symbolic_Id := Int32s.Null_Pointer;
       end if;
       
-   	  if Encoding.NamespaceUri then
-         Item.NamespaceUri := Int32s.Create(new Int32'(Int32'Input(Stream)));
+   	  if Encoding.Namespace_Uri then
+         Item.Namespace_Uri := Int32s.Create(new Int32'(Int32'Input(Stream)));
    	  else
-   	  	 Item.NamespaceUri := Int32s.Null_Pointer;
+   	  	 Item.Namespace_Uri := Int32s.Null_Pointer;
       end if;
       
-   	  if Encoding.LocalizedText then
-         Item.LocalizedText := Int32s.Create(new Int32'(Int32'Input(Stream)));
+   	  if Encoding.Localized_Text then
+         Item.Localized_Text := Int32s.Create(new Int32'(Int32'Input(Stream)));
    	  else
-   	  	 Item.LocalizedText := Int32s.Null_Pointer;
+   	  	 Item.Localized_Text := Int32s.Null_Pointer;
       end if;
       
    	  if Encoding.Locale then
@@ -352,22 +352,22 @@ package body Types.BuiltIn is
    	  	 Item.Locale := Int32s.Null_Pointer;
       end if;
       
-   	  if Encoding.AdditionalInfo then
-         Item.AdditionalInfo := String'Input(Stream);
+   	  if Encoding.Additional_Info then
+         Item.Additional_Info := String'Input(Stream);
    	  else
-   	  	 Item.AdditionalInfo := Create(null);
+   	  	 Item.Additional_Info := Create(null);
       end if;
       
-   	  if Encoding.InnerStatusCode then
-         Item.InnerStatusCode := StatusCodes.Create(new StatusCode'(StatusCode'Input(Stream)));
+   	  if Encoding.Inner_Status_Code then
+         Item.Inner_Status_Code := StatusCodes.Create(new StatusCode'(StatusCode'Input(Stream)));
    	  else
-   	  	 Item.InnerStatusCode := StatusCodes.Null_Pointer;
+   	  	 Item.Inner_Status_Code := StatusCodes.Null_Pointer;
       end if;
 	  
-      if Encoding.InnerDiagnosticInfo then
-         Item.InnerDiagnosticInfo := DiagnosticInfos.Create(new DiagnosticInfo'(DiagnosticInfo'Input(Stream)));
+      if Encoding.Inner_Diagnostic_Info then
+         Item.Inner_Diagnostic_Info := DiagnosticInfos.Create(new DiagnosticInfo'(DiagnosticInfo'Input(Stream)));
    	  else
-   	  	 Item.InnerDiagnosticInfo := DiagnosticInfos.Null_Pointer;
+   	  	 Item.Inner_Diagnostic_Info := DiagnosticInfos.Null_Pointer;
       end if;
    end Binary_Read;
 
@@ -401,10 +401,10 @@ package body Types.BuiltIn is
    begin
       LocalizedText_Encoding'Write(Stream, Encoding);
       if not Item.Locale.Is_Null then
-         Binary_Write(Stream, Item.Locale);
+         String'Write(Stream, Item.Locale);
       end if;
       if not Item.Text.Is_Null then
-         Binary_Write(Stream, Item.Text);
+         String'Write(Stream, Item.Text);
       end if;
    end Binary_Write;
 
@@ -429,8 +429,8 @@ package body Types.BuiltIn is
 	  Size := Size + Binary_Size(Item.TypeId.Get);
       case Item.Encoding is
          when NO_BODY => null;
-         when BYTESTRING_BODY => Size := Size + Binary_Size(Item.ByteString_Body);
-         when XMLELEMENT_BODY => Size := Size + Binary_Size(Item.XmlElement_Body);
+         when BYTESTRING_BODY => Size := Size + Binary_Size(Item.Byte_String_Body);
+         when XMLELEMENT_BODY => Size := Size + Binary_Size(Item.Xml_Element_Body);
       end case;
 	  return Size;
    end Binary_Size;
@@ -441,8 +441,8 @@ package body Types.BuiltIn is
       ExtensionObject_Encoding'Write(Stream, Item.Encoding);
       case Item.Encoding is
          when NO_BODY => null;
-         when BYTESTRING_BODY => Binary_Write(Stream, Item.ByteString_Body);
-         when XMLELEMENT_BODY => Binary_Write(Stream, Item.XmlElement_Body);
+         when BYTESTRING_BODY => NotNullByteString'Write(Stream, Item.Byte_String_Body);
+         when XMLELEMENT_BODY => NotNullXmlElement'Write(Stream, Item.Xml_Element_Body);
       end case;
    end Binary_Write;
 
@@ -467,8 +467,8 @@ package body Types.BuiltIn is
    
    procedure Binary_Write (Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : in QualifiedName) is
    begin
-	  UInt16'Write(Stream, Item.NamespaceIndex);
-	  Binary_Write(Stream, Item.Name);
+	  UInt16'Write(Stream, Item.Namespace_Index);
+	  NotNullString'Write(Stream, Item.Name);
    end Binary_Write;
 
    procedure Binary_Read (Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out QualifiedName) is
@@ -482,18 +482,18 @@ package body Types.BuiltIn is
    type DataValue_Encoding is record
       Has_Value             : Standard.Boolean;
       Has_Status            : Standard.Boolean;
-      Has_SourceTimestamp   : Standard.Boolean;
-      Has_ServerTimestamp   : Standard.Boolean;
-      Has_SourcePicoseconds : Standard.Boolean;
-      Has_ServerPicoseconds : Standard.Boolean;
+      Has_Source_Timestamp   : Standard.Boolean;
+      Has_Server_Timestamp   : Standard.Boolean;
+      Has_Source_Picoseconds : Standard.Boolean;
+      Has_Server_Picoseconds : Standard.Boolean;
    end record;
    for DataValue_Encoding use record
       Has_Value             at 0 range 0 .. 0;
       Has_Status            at 0 range 1 .. 1;
-      Has_SourceTimestamp   at 0 range 2 .. 2;
-      Has_ServerTimestamp   at 0 range 3 .. 3;
-      Has_SourcePicoseconds at 0 range 4 .. 4;
-      Has_ServerPicoseconds at 0 range 5 .. 5;
+      Has_Source_Timestamp   at 0 range 2 .. 2;
+      Has_Server_Timestamp   at 0 range 3 .. 3;
+      Has_Source_Picoseconds at 0 range 4 .. 4;
+      Has_Server_Picoseconds at 0 range 5 .. 5;
    end record;
    for DataValue_Encoding'Size use 8;
 
@@ -506,25 +506,25 @@ package body Types.BuiltIn is
 	  if not Item.Status.Is_Null then
 		 Size := Size + 4;
 	  end if;
-	  if not Item.SourceTimestamp.Is_Null then
+	  if not Item.Source_Timestamp.Is_Null then
 		 Size := Size + 8;
 	  end if;
-	  if not Item.SourcePicoseconds.Is_Null then
+	  if not Item.Source_Picoseconds.Is_Null then
 		 Size := Size + 2;
 	  end if;
-	  if not Item.ServerTimestamp.Is_Null then
+	  if not Item.Server_Timestamp.Is_Null then
 		 Size := Size + 8;
 	  end if;
-	  if not Item.ServerPicoseconds.Is_Null then
+	  if not Item.Server_Picoseconds.Is_Null then
 		 Size := Size + 2;
 	  end if;
 	  return Size;
    end Binary_Size;
 
    procedure Binary_Write(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : in DataValue) is
-      Encoding : constant DataValue_Encoding := (not Item.Value.Is_Null, not Item.Status.Is_Null, not Item.SourceTimestamp.Is_Null,
-                                                 not Item.SourcePicoseconds.Is_Null, not Item.ServerTimestamp.Is_Null,
-                                                 not Item.ServerPicoseconds.Is_Null);
+      Encoding : constant DataValue_Encoding := (not Item.Value.Is_Null, not Item.Status.Is_Null, not Item.Source_Timestamp.Is_Null,
+                                                 not Item.Source_Picoseconds.Is_Null, not Item.Server_Timestamp.Is_Null,
+                                                 not Item.Server_Picoseconds.Is_Null);
    begin
       DataValue_Encoding'Write(Stream, Encoding);
       if not Item.Value.Is_Null then
@@ -533,17 +533,17 @@ package body Types.BuiltIn is
       if not Item.Status.Is_Null then
          StatusCode'Write(Stream, Item.Status.Get);
       end if;
-      if not Item.SourceTimestamp.Is_Null then
-         DateTime'Write(Stream, Item.SourceTimestamp.Get);
+      if not Item.Source_Timestamp.Is_Null then
+         DateTime'Write(Stream, Item.Source_Timestamp.Get);
       end if;
-      if not Item.SourcePicoseconds.Is_Null then
-         UInt16'Write(Stream, Item.SourcePicoseconds.Get);
+      if not Item.Source_Picoseconds.Is_Null then
+         UInt16'Write(Stream, Item.Source_Picoseconds.Get);
       end if;
-      if not Item.ServerTimestamp.Is_Null then
-         DateTime'Write(Stream, Item.ServerTimestamp.Get);
+      if not Item.Server_Timestamp.Is_Null then
+         DateTime'Write(Stream, Item.Server_Timestamp.Get);
       end if;
-      if not Item.ServerPicoseconds.Is_Null then
-         UInt16'Write(Stream, Item.ServerPicoseconds.Get);
+      if not Item.Server_Picoseconds.Is_Null then
+         UInt16'Write(Stream, Item.Server_Picoseconds.Get);
       end if;
    end Binary_Write;
 
@@ -557,44 +557,30 @@ package body Types.BuiltIn is
       if Encoding.Has_Status then
          Item.Status := StatusCodes.Create(new StatusCode'(StatusCode'Input(Stream)));
       end if;
-      if Encoding.Has_SourceTimestamp then
-         Item.SourceTimestamp := DateTimes.Create(new DateTime'(DateTime'Input(Stream)));
+      if Encoding.Has_Source_Timestamp then
+         Item.Source_Timestamp := DateTimes.Create(new DateTime'(DateTime'Input(Stream)));
       end if;
-      if Encoding.Has_SourcePicoseconds then
-         Item.SourcePicoseconds := UInt16s.Create(new UInt16'(UInt16'Input(Stream)));
+      if Encoding.Has_Source_Picoseconds then
+         Item.Source_Picoseconds := UInt16s.Create(new UInt16'(UInt16'Input(Stream)));
       end if;
-      if Encoding.Has_ServerTimestamp then
-         Item.ServerTimestamp := DateTimes.Create(new DateTime'(DateTime'Input(Stream)));
+      if Encoding.Has_Server_Timestamp then
+         Item.Server_Timestamp := DateTimes.Create(new DateTime'(DateTime'Input(Stream)));
       end if;
-      if Encoding.Has_ServerPicoseconds then
-         Item.ServerPicoseconds := UInt16s.Create(new UInt16'(UInt16'Input(Stream)));
+      if Encoding.Has_Server_Picoseconds then
+         Item.Server_Picoseconds := UInt16s.Create(new UInt16'(UInt16'Input(Stream)));
       end if;
    end Binary_Read;
 
    ---------------
    --  Variant  --
    ---------------
-   
-   -- Old Encoding
-   --  type Variant_Encoding is record
-   --     Value_Type       : VariantType;
-   --     HasArrayDimensions : Standard.Boolean;
-   --     IsArray            : Standard.Boolean;
-   --  end record;
-   --  for Variant_Encoding use record
-   --     Value_Type          at 0 range 0 .. 5;
-   --     HasArrayDimensions  at 0 range 6 .. 6;
-   --     IsArray             at 0 range 7 .. 7;
-   --  end record;
-   --  for Variant_Encoding'Size use 8;
-   
    function VariantType2Byte is new Ada.Unchecked_Conversion(VariantType, Byte);
    function Byte2VariantType is new Ada.Unchecked_Conversion(Byte, VariantType);
 
    procedure Binary_Write(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : in Variant) is
 	  Encoding_Byte : Byte := VariantType2Byte(Item.Variant_Type);
    begin
-	  if VariantType'Pos(Item.Variant_Type) > 128 and then not Item.ArrayDimensions.Is_Null then
+	  if VariantType'Pos(Item.Variant_Type) > 128 and then not Item.Array_Dimensions.Is_Null then
 		 Encoding_Byte := Encoding_Byte + 64;
 	  end if;
 	  Byte'Write(Stream, Encoding_Byte);
@@ -610,20 +596,20 @@ package body Types.BuiltIn is
 		 when UINT64_VARIANT => UInt64'Write(Stream, Item.UInt64_Value);
 		 when FLOAT_VARIANT => Float'Write(Stream, Item.Float_Value);
 		 when DOUBLE_VARIANT => Double'Write(Stream,Item.Double_Value);
-		 when STRING_VARIANT => Binary_Write(Stream,Item.String_Value);
-		 when DATETIME_VARIANT => DateTime'Write(Stream,Item.DateTime_Value);
-		 when GUID_VARIANT => Binary_Write(Stream,Item.Guid_Value);
-		 when BYTESTRING_VARIANT => Binary_Write(Stream,Item.ByteString_Value);
-		 when XMLELEMENT_VARIANT => Binary_Write(Stream,Item.XmlElement_Value);
-		 when NODEID_VARIANT => Binary_Write(Stream, Item.NodeId_Value.Get);
-		 when EXPANDEDNODEID_VARIANT => Binary_Write(Stream,Item.ExpandedNodeId_Value.Get);
-		 when STATUSCODE_VARIANT => StatusCode'Write(Stream,Item.StatusCode_Value);
-		 when QUALIFIEDNAME_VARIANT => Binary_Write(Stream,Item.QualifiedName_Value.Get);
-		 when LOCALIZEDTEXT_VARIANT => Binary_Write(Stream,Item.LocalizedText_Value.Get);
-		 when EXTENSIONOBJECT_VARIANT => Binary_Write(Stream,Item.ExtensionObject_Value.Get);
-		 when DATAVALUE_VARIANT => Binary_Write(Stream,Item.DataValue_Value.Get);
+		 when STRING_VARIANT => String'Write(Stream,Item.String_Value);
+		 when DATETIME_VARIANT => DateTime'Write(Stream,Item.Date_Time_Value);
+		 when GUID_VARIANT => Guid'Write(Stream,Item.Guid_Value);
+		 when BYTESTRING_VARIANT => ByteString'Write(Stream,Item.Byte_String_Value);
+		 when XMLELEMENT_VARIANT => XmlElement'Write(Stream,Item.Xml_Element_Value);
+		 when NODEID_VARIANT => Binary_Write(Stream, Item.Node_Id_Value.Get);
+		 when EXPANDEDNODEID_VARIANT => Binary_Write(Stream,Item.Expanded_Node_Id_Value.Get);
+		 when STATUSCODE_VARIANT => StatusCode'Write(Stream,Item.Status_Code_Value);
+		 when QUALIFIEDNAME_VARIANT => Binary_Write(Stream,Item.Qualified_Name_Value.Get);
+		 when LOCALIZEDTEXT_VARIANT => Binary_Write(Stream,Item.Localized_Text_Value.Get);
+		 when EXTENSIONOBJECT_VARIANT => Binary_Write(Stream,Item.Extension_Object_Value.Get);
+		 when DATAVALUE_VARIANT => Binary_Write(Stream,Item.Data_Value_Value.Get);
 		 when VARIANT_VARIANT => Binary_Write(Stream, Variant(Item.Variant_Value.Get.Data.all));
-		 when DIAGNOSTICINFO_VARIANT => Binary_Write(Stream, DiagnosticInfo(Item.DiagnosticInfo_Value.Get.Data.all));
+		 when DIAGNOSTICINFO_VARIANT => Binary_Write(Stream, DiagnosticInfo(Item.Diagnostic_Info_Value.Get.Data.all));
 		 when others =>
 			case Item.Variant_Type is
 			   when BOOLEAN_ARRAY_VARIANT => ListOfBoolean.Pointer'Write(Stream, Item.Boolean_Values);
@@ -638,32 +624,32 @@ package body Types.BuiltIn is
 			   when FLOAT_ARRAY_VARIANT => ListOfFloat.Pointer'Write(Stream, Item.Float_Values);
 			   when DOUBLE_ARRAY_VARIANT => ListOfDouble.Pointer'Write(Stream, Item.Double_Values);
 			   when STRING_ARRAY_VARIANT => ListOfString.Pointer'Write(Stream, Item.String_Values);
-			   when DATETIME_ARRAY_VARIANT => ListOfDateTime.Pointer'Write(Stream, Item.DateTime_Values);
+			   when DATETIME_ARRAY_VARIANT => ListOfDateTime.Pointer'Write(Stream, Item.Date_Time_Values);
 			   when GUID_ARRAY_VARIANT => ListOfGuid.Pointer'Write(Stream, Item.Guid_Values);
-			   when BYTESTRING_ARRAY_VARIANT => ListOfByteString.Pointer'Write(Stream, Item.ByteString_Values);
-			   when XMLELEMENT_ARRAY_VARIANT => ListOfXmlElement.Pointer'Write(Stream, Item.XmlElement_Values);
-			   when NODEID_ARRAY_VARIANT => ListOfNodeId.Pointer'Write(Stream, Item.NodeId_Values);
-			   when EXPANDEDNODEID_ARRAY_VARIANT => ListOfExpandedNodeId.Pointer'Write(Stream, Item.ExpandedNodeId_Values);
-			   when STATUSCODE_ARRAY_VARIANT => ListOfStatusCode.Pointer'Write(Stream, Item.StatusCode_Values);
-			   when QUALIFIEDNAME_ARRAY_VARIANT => ListOfQualifiedName.Pointer'Write(Stream, Item.QualifiedName_Values);
-			   when LOCALIZEDTEXT_ARRAY_VARIANT => ListOfLocalizedText.Pointer'Write(Stream, Item.LocalizedText_Values);
-			   when EXTENSIONOBJECT_ARRAY_VARIANT => ListOfExtensionObject.Pointer'Write(Stream, Item.ExtensionObject_Values);
-			   when DATAVALUE_ARRAY_VARIANT => ListOfDataValue.Pointer'Write(Stream, Item.DataValue_Values);
+			   when BYTESTRING_ARRAY_VARIANT => ListOfByteString.Pointer'Write(Stream, Item.Byte_String_Values);
+			   when XMLELEMENT_ARRAY_VARIANT => ListOfXmlElement.Pointer'Write(Stream, Item.Xml_Element_Values);
+			   when NODEID_ARRAY_VARIANT => ListOfNodeId.Pointer'Write(Stream, Item.Node_Id_Values);
+			   when EXPANDEDNODEID_ARRAY_VARIANT => ListOfExpandedNodeId.Pointer'Write(Stream, Item.Expanded_Node_Id_Values);
+			   when STATUSCODE_ARRAY_VARIANT => ListOfStatusCode.Pointer'Write(Stream, Item.Status_Code_Values);
+			   when QUALIFIEDNAME_ARRAY_VARIANT => ListOfQualifiedName.Pointer'Write(Stream, Item.Qualified_Name_Values);
+			   when LOCALIZEDTEXT_ARRAY_VARIANT => ListOfLocalizedText.Pointer'Write(Stream, Item.Localized_Text_Values);
+			   when EXTENSIONOBJECT_ARRAY_VARIANT => ListOfExtensionObject.Pointer'Write(Stream, Item.Extension_Object_Values);
+			   when DATAVALUE_ARRAY_VARIANT => ListOfDataValue.Pointer'Write(Stream, Item.Data_Value_Values);
 			   when VARIANT_ARRAY_VARIANT => ListOfVariant.Pointer'Write(Stream, Item.Variant_Values);
-			   when DIAGNOSTICINFO_ARRAY_VARIANT => ListOfDiagnosticInfo.Pointer'Write(Stream, Item.DiagnosticInfo_Values);
+			   when DIAGNOSTICINFO_ARRAY_VARIANT => ListOfDiagnosticInfo.Pointer'Write(Stream, Item.Diagnostic_Info_Values);
 			   when others => null;
 			end case;
-			if not Item.ArrayDimensions.Is_Null then
-			   ListOfInt32.Nullable_Pointer'Write(Stream, Item.ArrayDimensions);
+			if not Item.Array_Dimensions.Is_Null then
+			   ListOfInt32.Nullable_Pointer'Write(Stream, Item.Array_Dimensions);
 			end if;
       end case;
    end Binary_Write;
 
    procedure Binary_Read(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out Variant) is
       Encoding_Byte : Byte := Byte'Input(Stream);
-	  With_ArrayDimensions : constant Standard.Boolean := (Encoding_Byte and 64) > 0;
+	  With_Array_Dimensions : constant Standard.Boolean := (Encoding_Byte and 64) > 0;
    begin
-	  if With_ArrayDimensions then
+	  if With_Array_Dimensions then
 		 Encoding_Byte := Encoding_Byte - 64;
 	  end if;
 	  case Byte2VariantType(Encoding_Byte) is
@@ -724,8 +710,8 @@ package body Types.BuiltIn is
 				  when DIAGNOSTICINFO_ARRAY_VARIANT => Item := Variant'(DIAGNOSTICINFO_ARRAY_VARIANT, Empty_Dimensions, ListOfDiagnosticInfo.Pointer'Input(Stream));
 				  when others => null;
 			   end case;
-			   if With_ArrayDimensions then
-			   	  Item.ArrayDimensions := ListOfInt32.Nullable_Pointer'(ListOfInt32.Nullable_Pointer'Input(Stream));
+			   if With_Array_Dimensions then
+			   	  Item.Array_Dimensions := ListOfInt32.Nullable_Pointer'(ListOfInt32.Nullable_Pointer'Input(Stream));
 			   end if;
 			end;
    	  end case;
@@ -741,16 +727,16 @@ package body Types.BuiltIn is
 		 when INT64_VARIANT | UINT64_VARIANT | DOUBLE_VARIANT | DATETIME_VARIANT => Size := Size + 8;
 		 when STRING_VARIANT => Size := Size + Binary_Size(Item.String_Value);
 		 when GUID_VARIANT => Size := Size + Binary_Size(Item.Guid_Value);
-		 when BYTESTRING_VARIANT => Size := Size + Binary_Size(Item.ByteString_Value);
-		 when XMLELEMENT_VARIANT => Size := Size + Binary_Size(Item.XmlElement_Value);
-		 when NODEID_VARIANT => Size := Size + Item.NodeId_Value.Binary_Size;
-		 when EXPANDEDNODEID_VARIANT => Size := Size + Item.ExpandedNodeId_Value.Binary_Size;
-		 when QUALIFIEDNAME_VARIANT => Size := Size + Item.QualifiedName_Value.Binary_Size;
-		 when LOCALIZEDTEXT_VARIANT => Size := Size + Item.LocalizedText_Value.Binary_Size;
-		 when EXTENSIONOBJECT_VARIANT => Size := Size + Item.ExtensionObject_Value.Binary_Size;
-		 when DATAVALUE_VARIANT => Size := Size + Item.DataValue_Value.Binary_Size;
+		 when BYTESTRING_VARIANT => Size := Size + Binary_Size(Item.Byte_String_Value);
+		 when XMLELEMENT_VARIANT => Size := Size + Binary_Size(Item.Xml_Element_Value);
+		 when NODEID_VARIANT => Size := Size + Item.Node_Id_Value.Binary_Size;
+		 when EXPANDEDNODEID_VARIANT => Size := Size + Item.Expanded_Node_Id_Value.Binary_Size;
+		 when QUALIFIEDNAME_VARIANT => Size := Size + Item.Qualified_Name_Value.Binary_Size;
+		 when LOCALIZEDTEXT_VARIANT => Size := Size + Item.Localized_Text_Value.Binary_Size;
+		 when EXTENSIONOBJECT_VARIANT => Size := Size + Item.Extension_Object_Value.Binary_Size;
+		 when DATAVALUE_VARIANT => Size := Size + Item.Data_Value_Value.Binary_Size;
 		 when VARIANT_VARIANT => Size := Size + Variant(Item.Variant_Value.Get.Data.all).Binary_Size;
-		 when DIAGNOSTICINFO_VARIANT => Size := Size + DiagnosticInfo(Item.DiagnosticInfo_Value.Get.Data.all).Binary_Size;
+		 when DIAGNOSTICINFO_VARIANT => Size := Size + DiagnosticInfo(Item.Diagnostic_Info_Value.Get.Data.all).Binary_Size;
    		 when others =>
    			case Item.Variant_Type is
    			   when BOOLEAN_ARRAY_VARIANT => Size := Size + Item.Boolean_Values.Binary_Size;
@@ -765,23 +751,23 @@ package body Types.BuiltIn is
    			   when FLOAT_ARRAY_VARIANT => Size := Size + Item.Float_Values.Binary_Size;
    			   when DOUBLE_ARRAY_VARIANT => Size := Size + Item.Double_Values.Binary_Size;
    			   when STRING_ARRAY_VARIANT => Size := Size + Item.String_Values.Binary_Size;
-   			   when DATETIME_ARRAY_VARIANT => Size := Size + Item.DateTime_Values.Binary_Size;
+   			   when DATETIME_ARRAY_VARIANT => Size := Size + Item.Date_Time_Values.Binary_Size;
    			   when GUID_ARRAY_VARIANT => Size := Size + Item.Guid_Values.Binary_Size;
-   			   when BYTESTRING_ARRAY_VARIANT => Size := Size + Item.ByteString_Values.Binary_Size;
-   			   when XMLELEMENT_ARRAY_VARIANT => Size := Size + Item.XmlElement_Values.Binary_Size;
-   			   when NODEID_ARRAY_VARIANT => Size := Size + Item.NodeId_Values.Binary_Size;
-   			   when EXPANDEDNODEID_ARRAY_VARIANT => Size := Size + Item.ExpandedNodeId_Values.Binary_Size;
-   			   when STATUSCODE_ARRAY_VARIANT => Size := Size + Item.StatusCode_Values.Binary_Size;
-   			   when QUALIFIEDNAME_ARRAY_VARIANT => Size := Size + Item.QualifiedName_Values.Binary_Size;
-   			   when LOCALIZEDTEXT_ARRAY_VARIANT => Size := Size + Item.LocalizedText_Values.Binary_Size;
-   			   when EXTENSIONOBJECT_ARRAY_VARIANT => Size := Size + Item.ExtensionObject_Values.Binary_Size;
-   			   when DATAVALUE_ARRAY_VARIANT => Size := Size + Item.DataValue_Values.Binary_Size;
+   			   when BYTESTRING_ARRAY_VARIANT => Size := Size + Item.Byte_String_Values.Binary_Size;
+   			   when XMLELEMENT_ARRAY_VARIANT => Size := Size + Item.Xml_Element_Values.Binary_Size;
+   			   when NODEID_ARRAY_VARIANT => Size := Size + Item.Node_Id_Values.Binary_Size;
+   			   when EXPANDEDNODEID_ARRAY_VARIANT => Size := Size + Item.Expanded_Node_Id_Values.Binary_Size;
+   			   when STATUSCODE_ARRAY_VARIANT => Size := Size + Item.Status_Code_Values.Binary_Size;
+   			   when QUALIFIEDNAME_ARRAY_VARIANT => Size := Size + Item.Qualified_Name_Values.Binary_Size;
+   			   when LOCALIZEDTEXT_ARRAY_VARIANT => Size := Size + Item.Localized_Text_Values.Binary_Size;
+   			   when EXTENSIONOBJECT_ARRAY_VARIANT => Size := Size + Item.Extension_Object_Values.Binary_Size;
+   			   when DATAVALUE_ARRAY_VARIANT => Size := Size + Item.Data_Value_Values.Binary_Size;
    			   when VARIANT_ARRAY_VARIANT => Size := Size + Item.Variant_Values.Binary_Size;
-   			   when DIAGNOSTICINFO_ARRAY_VARIANT => Size := Size + Item.DiagnosticInfo_Values.Binary_Size;
+   			   when DIAGNOSTICINFO_ARRAY_VARIANT => Size := Size + Item.Diagnostic_Info_Values.Binary_Size;
 			   when others => null;
    			end case;
-   			if not Item.ArrayDimensions.Is_Null Then
-   			   Size := Size + Item.ArrayDimensions.Binary_Size;
+   			if not Item.Array_Dimensions.Is_Null Then
+   			   Size := Size + Item.Array_Dimensions.Binary_Size;
    			end if;
 	  end case;
 	  return Size;

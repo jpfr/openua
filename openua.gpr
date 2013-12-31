@@ -14,7 +14,7 @@ project OpenUA is
    package Compiler is
       case Mode is
          when "Debug" => for Default_Switches ("ada") use ("-gnato", "-gnatwa", "-gnatQ", "-gnat12");
-         when "Release" => for Default_Switches ("ada") use ("-gnatQ", "-O2", "-gnatn", "gnat2012", "-flto", "-fdata-sections", "-ffunction-sections");
+         when "Release" => for Default_Switches ("ada") use ("-gnatQ", "-O2", "-gnatn", "-gnat2012", "-flto", "-fdata-sections", "-ffunction-sections");
       end case;
    end Compiler;
 

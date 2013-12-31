@@ -117,7 +117,7 @@ package body Types.Smart_Pointers is
 
 	  procedure Binary_Write(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : in Pointer) is
 	  begin
-		 Binary_Write(Stream, Item.Rep.Value.all);
+		 T'Write(Stream, Item.Rep.Value.all);
 	  end Binary_Write;
 
 	  procedure Binary_Read(Stream : not null access Ada.Streams.Root_Stream_Type'Class; Item : out Pointer) is

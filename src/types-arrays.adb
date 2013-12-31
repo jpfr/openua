@@ -167,7 +167,7 @@ package body Types.Arrays is
 		 if Item.Rep /= null then
 			Integer'Write(Stream, Item.Rep.Value.all'Length);
 			for Elem of Item.Rep.Value.all loop
-			   Binary_Write(Stream, Elem);
+			   T_SP.Pointer'Write(Stream, Elem);
 			end loop;
 		 else
 			Integer'Write(Stream, -1);
@@ -183,7 +183,7 @@ package body Types.Arrays is
 			   Obj : constant access A := new AST;
 			begin
 			   for Elem of Obj.all loop
-				  Binary_Read(Stream, Elem);
+				  T_SP.Pointer'Read(Stream, Elem);
 			   end loop;
 			   Item := Refcounted_Pointer'(Ada.Finalization.Controlled with Rep => new Node'(Count => 1, Value => Obj));
 			end;

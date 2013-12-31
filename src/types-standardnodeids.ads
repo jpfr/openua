@@ -709,7 +709,7 @@ package Types.StandardNodeIds with Pure is
    ModelChangeStructureDataType_Encoding_DefaultXml_Id : constant UInt16 := 878; -- Object
    ModelChangeStructureDataType_Encoding_DefaultBinary_Id : constant UInt16 := 879; -- Object
    ModelChangeStructureVerbMask_Id : constant UInt16 := 880; -- DataType
-   -- Range_Id : constant UInt16 := 884; -- DataType
+   Range_Id : constant UInt16 := 884; -- DataType
    Range_Encoding_DefaultXml_Id : constant UInt16 := 885; -- Object
    Range_Encoding_DefaultBinary_Id : constant UInt16 := 886; -- Object
    EUInformation_Id : constant UInt16 := 887; -- DataType
